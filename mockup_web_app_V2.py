@@ -3,7 +3,7 @@ import zipfile
 from PIL import Image
 import streamlit as st
 
-from mockup_utils import generate_mockup, generate_filename, generate_multi_panel_mockup
+from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
 from template_coordinates import TEMPLATE_COORDINATES
 
 st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
