@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment / config
+.env
+.venv/
+venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Logs / cache
+*.log
+*.bak
+.cache/
+
+# Editor / IDE files
+.vscode/
+.idea/
+
+# Uploaded + generated files
+uploaded_artwork/
+generated_mockups/
+Templates/Digital/__pycache__/
+
+# Streamlit specific
+.streamlit/
+
+# Zip and archive files
+*.zip
+
+# Exclude image templates
+!Templates/Digital/*.png
