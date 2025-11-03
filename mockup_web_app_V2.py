@@ -35,16 +35,7 @@ st.markdown("""
     }
 
     /* Generic input styling */
-    input, textarea, select {
-        border-radius: 8px !important;
-        border: 1px solid white !important;
-        box-shadow: none !important;
-        background-color: #A27DA2 !important;
-        color: black !important;
-        font-family: 'Montserrat', sans-serif !important;
-    }
-
-    /* Streamlit-specific inputs */
+    input, textarea, select,
     .stTextInput input,
     .stTextArea textarea,
     .stDateInput input,
@@ -55,41 +46,13 @@ st.markdown("""
         box-shadow: none !important;
         background-color: #A27DA2 !important;
         color: black !important;
+        font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Select dropdown wrapper */
+    /* Multiselect dropdown */
     div[data-baseweb="select"] {
         background-color: transparent !important;
         box-shadow: none !important;
-    }
-    /* Selected tags in multiselect dropdown */
-    div[data-baseweb="tag"] {
-    background-color: #542D54 !important;
-    color: white !important;
-    border-radius: 6px !important;
-    font-family: 'Montserrat', sans-serif !important;
-    }
-
-    /* "Browse files" button text to purple */
-    section[data-testid="stFileUploader"] button {
-    background-color: #A27DA2 !important;
-    color: #542D54 !important;
-    font-weight: bold;
-    border: 1px solid white !important;
-    border-radius: 6px !important;
-    }
-
-    /* Make multiselect placeholder and selected text white */
-    div[data-baseweb="select"] div[role="combobox"] {
-    color: white !important;
-    }
-
-    /* Fix selected items in multiselect dropdown */
-    div[data-baseweb="tag"] {
-    background-color: #542D54 !important;
-    color: white !important;
-    border-radius: 6px !important;
-    font-family: 'Montserrat', sans-serif' !important;
     }
 
     div[data-baseweb="select"] > div {
@@ -99,20 +62,20 @@ st.markdown("""
         color: white !important;
     }
 
-    div[data-baseweb="select"] span {
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div[role="combobox"] {
         color: white !important;
     }
 
-    /* Remove focus border glow */
-    input:focus,
-    textarea:focus,
-    select:focus,
-    div[data-baseweb="select"]:focus {
-        outline: none !important;
-        box-shadow: none !important;
+    /* Multiselect selected tags */
+    div[data-baseweb="tag"] {
+        background-color: #542D54 !important;
+        color: white !important;
+        border-radius: 6px !important;
+        font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* File uploader container */
+    /* File uploader */
     section[data-testid="stFileUploader"] {
         background-color: #A27DA2 !important;
         border: 1px solid white !important;
@@ -131,7 +94,6 @@ st.markdown("""
         text-align: left;
     }
 
-    /* Browse files button with purple text */
     section[data-testid="stFileUploader"] button {
         background-color: #A27DA2 !important;
         color: #542D54 !important;
@@ -141,7 +103,8 @@ st.markdown("""
     }
 
     /* Main buttons */
-    .stButton > button {
+    .stButton > button,
+    .stDownloadButton > button {
         display: block;
         margin: 0 auto;
         background-color: #A27DA2 !important;
@@ -156,55 +119,32 @@ st.markdown("""
         color: white !important;
     }
 
-    .stButton > button:disabled {
+    .stButton > button:disabled,
+    .stDownloadButton > button:disabled {
         background-color: #d0c0d3 !important;
         color: grey !important;
         opacity: 0.5;
         cursor: not-allowed !important;
     }
 
-    /* Main buttons */
-    .stButton > button {
-    display: block;
-    margin: 0 auto;
-    background-color: #A27DA2 !important;
-    color: white !important;
-    border: 1px solid white !important;
-    border-radius: 8px !important;
-    font-family: 'Montserrat', sans-serif !important;
-    }
-
-    .stButton > button:hover {
-    background-color: #C8A7C9 !important;
-    color: white !important;
-    }
-
-    .stButton > button:disabled {
-    background-color: #d0c0d3 !important;
-    color: grey !important;
-    opacity: 0.5;
-    cursor: not-allowed !important;
-    }
-
-    /* Download button */
-    .stDownloadButton > button {
-    color: white !important;
-    border: 1px solid white !important;
-    border-radius: 8px !important;
-    background-color: #A27DA2 !important;
-    font-family: 'Montserrat', sans-serif !important;
-    }
-
     .stDownloadButton > button:disabled {
-    color: white !important;
-    opacity: 0.4 !important;
-    background-color: #d0c0d3 !important;
+        color: white !important;
+        opacity: 0.4 !important;
     }
 
     /* Labels and headings */
     label, .css-1cpxqw2 {
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
+    }
+
+    /* Remove focus border glow */
+    input:focus,
+    textarea:focus,
+    select:focus,
+    div[data-baseweb="select"]:focus {
+        outline: none !important;
+        box-shadow: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
