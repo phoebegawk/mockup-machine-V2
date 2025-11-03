@@ -34,50 +34,60 @@ st.markdown("""
         padding-top: 2rem !important;
     }
 
-    /* Input fields & dropdowns */
+    /* Generic input styling */
+    input, textarea, select {
+        border-radius: 8px !important;
+        border: 1px solid white !important;
+        box-shadow: none !important;
+        background-color: #A27DA2 !important;
+        color: black !important;
+        font-family: 'Montserrat', sans-serif !important;
+    }
+
+    /* Streamlit-specific inputs */
     .stTextInput input,
     .stTextArea textarea,
     .stDateInput input,
     .stMultiSelect > div,
-    .stSelectbox > div,
-    .stSelectbox label,
-    div[data-baseweb="select"] {
+    .stSelectbox > div {
+        border-radius: 8px !important;
+        border: 1px solid white !important;
+        box-shadow: none !important;
         background-color: #A27DA2 !important;
         color: black !important;
-        border: none !important;
+    }
+
+    /* Select dropdown wrapper */
+    div[data-baseweb="select"] {
+        background-color: transparent !important;
         box-shadow: none !important;
     }
 
-   /* Remove light purple highlight behind select dropdown */
-div[data-baseweb="select"] {
-    background-color: transparent !important;
-    box-shadow: none !important;
+    div[data-baseweb="select"] > div {
+        background-color: #A27DA2 !important;
+        border: 1px solid white !important;
+        border-radius: 8px !important;
+        color: white !important;
     }
 
-div[data-baseweb="select"] > div {
-    background-color: #A27DA2 !important;
-    color: black !important;
-    border: none !important;
-    box-shadow: none !important;
+    div[data-baseweb="select"] span {
+        color: white !important;
     }
-    
-    /* Remove border focus */
+
+    /* Remove focus border glow */
     input:focus,
     textarea:focus,
     select:focus,
-    .stSelectbox:focus,
-    .stMultiSelect:focus,
-    .stTextInput:focus,
-    .stDateInput:focus,
     div[data-baseweb="select"]:focus {
         outline: none !important;
         box-shadow: none !important;
     }
 
-    /* File uploader */
+    /* File uploader container */
     section[data-testid="stFileUploader"] {
         background-color: #A27DA2 !important;
-        border: none !important;
+        border: 1px solid white !important;
+        border-radius: 8px !important;
         box-shadow: none !important;
     }
 
@@ -92,21 +102,23 @@ div[data-baseweb="select"] > div {
         text-align: left;
     }
 
-    /* "Browse files" button */
+    /* Browse files button with purple text */
     section[data-testid="stFileUploader"] button {
         background-color: #A27DA2 !important;
         color: #542D54 !important;
         font-weight: bold;
-        border: none !important;
+        border: 1px solid white !important;
+        border-radius: 6px !important;
     }
 
-    /* Action buttons */
+    /* Main buttons */
     .stButton > button {
         display: block;
         margin: 0 auto;
         background-color: #A27DA2 !important;
         color: white !important;
-        border: none !important;
+        border: 1px solid white !important;
+        border-radius: 8px !important;
         font-family: 'Montserrat', sans-serif !important;
     }
 
