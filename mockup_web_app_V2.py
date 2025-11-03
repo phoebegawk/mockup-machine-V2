@@ -12,7 +12,7 @@ st.set_page_config(page_title="Mock Up Machine", layout="wide")
 # Header
 st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
 
-# Finalized Style Block
+# Style Block
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
@@ -34,7 +34,7 @@ st.markdown("""
         padding-top: 2rem !important;
     }
 
-    /* Input fields and dropdowns */
+    /* Input fields & dropdowns */
     .stTextInput input,
     .stTextArea textarea,
     .stDateInput input,
@@ -48,7 +48,17 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Remove border highlight on focus */
+    /* Remove purple highlight behind dropdown */
+    div[data-baseweb="select"] {
+        background-color: transparent !important;
+    }
+
+    div[data-baseweb="select"] > div {
+        background-color: #A27DA2 !important;
+        color: black !important;
+    }
+
+    /* Remove border focus */
     input:focus,
     textarea:focus,
     select:focus,
@@ -79,15 +89,15 @@ st.markdown("""
         text-align: left;
     }
 
-    /* Browse Files button */
+    /* "Browse files" button */
     section[data-testid="stFileUploader"] button {
         background-color: #A27DA2 !important;
         color: #542D54 !important;
-        border: none !important;
         font-weight: bold;
+        border: none !important;
     }
 
-    /* Buttons */
+    /* Action buttons */
     .stButton > button {
         display: block;
         margin: 0 auto;
