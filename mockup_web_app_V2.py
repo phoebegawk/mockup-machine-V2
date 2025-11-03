@@ -63,6 +63,11 @@ st.markdown("""
         box-shadow: none !important;
     }
 
+    /* Make multiselect placeholder and selected text white */
+    div[data-baseweb="select"] div[role="combobox"] {
+    color: white !important;
+    }
+
     div[data-baseweb="select"] > div {
         background-color: #A27DA2 !important;
         border: 1px solid white !important;
@@ -132,6 +137,44 @@ st.markdown("""
         color: grey !important;
         opacity: 0.5;
         cursor: not-allowed !important;
+    }
+
+    /* Main buttons */
+    .stButton > button {
+    display: block;
+    margin: 0 auto;
+    background-color: #A27DA2 !important;
+    color: white !important;
+    border: 1px solid white !important;
+    border-radius: 8px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    }
+
+    .stButton > button:hover {
+    background-color: #C8A7C9 !important;
+    color: white !important;
+    }
+
+    .stButton > button:disabled {
+    background-color: #d0c0d3 !important;
+    color: grey !important;
+    opacity: 0.5;
+    cursor: not-allowed !important;
+    }
+
+    /* Download button */
+    .stDownloadButton > button {
+    color: white !important;
+    border: 1px solid white !important;
+    border-radius: 8px !important;
+    background-color: #A27DA2 !important;
+    font-family: 'Montserrat', sans-serif !important;
+    }
+
+    .stDownloadButton > button:disabled {
+    color: white !important;
+    opacity: 0.4 !important;
+    background-color: #d0c0d3 !important;
     }
 
     /* Labels and headings */
