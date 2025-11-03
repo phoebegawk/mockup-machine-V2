@@ -12,7 +12,7 @@ st.set_page_config(page_title="Mock Up Machine", layout="wide")
 # Header
 st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
 
-# Style Injection
+# Finalized Style Block
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
@@ -34,34 +34,40 @@ st.markdown("""
         padding-top: 2rem !important;
     }
 
-    /* Input fields, dropdowns, uploader container */
+    /* Input fields and dropdowns */
     .stTextInput input,
     .stTextArea textarea,
     .stDateInput input,
-    .stSelectbox > div,
     .stMultiSelect > div,
-    section[data-testid="stFileUploader"] {
+    .stSelectbox > div,
+    .stSelectbox label,
+    div[data-baseweb="select"] {
         background-color: #A27DA2 !important;
         color: black !important;
         border: none !important;
         box-shadow: none !important;
-        font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Clear outlines on focus */
+    /* Remove border highlight on focus */
     input:focus,
     textarea:focus,
     select:focus,
     .stSelectbox:focus,
-    .stFileUploader:focus,
     .stMultiSelect:focus,
     .stTextInput:focus,
-    .stDateInput:focus {
+    .stDateInput:focus,
+    div[data-baseweb="select"]:focus {
         outline: none !important;
         box-shadow: none !important;
     }
 
-    /* Fix uploader label spacing */
+    /* File uploader */
+    section[data-testid="stFileUploader"] {
+        background-color: #A27DA2 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
     section[data-testid="stFileUploader"] label > div {
         display: flex;
         flex-direction: column;
@@ -73,7 +79,15 @@ st.markdown("""
         text-align: left;
     }
 
-    /* Button styling */
+    /* Browse Files button */
+    section[data-testid="stFileUploader"] button {
+        background-color: #A27DA2 !important;
+        color: #542D54 !important;
+        border: none !important;
+        font-weight: bold;
+    }
+
+    /* Buttons */
     .stButton > button {
         display: block;
         margin: 0 auto;
@@ -95,7 +109,7 @@ st.markdown("""
         cursor: not-allowed !important;
     }
 
-    /* Form labels */
+    /* Labels and headings */
     label, .css-1cpxqw2 {
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
