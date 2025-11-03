@@ -146,6 +146,15 @@ st.markdown("""
         outline: none !important;
         box-shadow: none !important;
     }
+    /* Browse files button with purple text */
+    section[data-testid="stFileUploader"] button {
+    background-color: #A27DA2 !important;
+    color: #542D54 !important;
+    font-weight: bold;
+    border: 1px solid white !important;
+    border-radius: 6px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
