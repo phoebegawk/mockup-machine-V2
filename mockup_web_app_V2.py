@@ -68,6 +68,14 @@ st.markdown("""
     color: white !important;
     }
 
+    /* Fix selected items in multiselect dropdown */
+    div[data-baseweb="tag"] {
+    background-color: #542D54 !important;
+    color: white !important;
+    border-radius: 6px !important;
+    font-family: 'Montserrat', sans-serif' !important;
+    }
+
     div[data-baseweb="select"] > div {
         background-color: #A27DA2 !important;
         border: 1px solid white !important;
