@@ -9,15 +9,15 @@ from template_coordinates import TEMPLATE_COORDINATES
 # UI Config
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
-# Top header image with updated width parameter
+# Header
 st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
 
-# Global styles for Montserrat, colors, and updated layout
+# Style Injection
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    html, body, [class*="css"] {
+    html, body, .main {
         background-color: #542D54 !important;
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
@@ -28,11 +28,14 @@ st.markdown("""
         padding-top: 2rem !important;
     }
 
-    input, textarea, select, .stTextInput input, .stFileUploader, .stMultiSelect, .stDateInput {
+    .stApp {
+        background-color: #542D54 !important;
+    }
+
+    .stTextInput input, .stTextArea textarea, .stDateInput input, .stMultiSelect div[data-baseweb="select"] {
         background-color: #A27DA2 !important;
         color: black !important;
         border: none !important;
-        font-family: 'Montserrat', sans-serif !important;
     }
 
     section[data-testid="stFileUploader"] label > div {
@@ -46,6 +49,11 @@ st.markdown("""
         text-align: left;
     }
 
+    .stFileUploader {
+        background-color: #A27DA2 !important;
+        color: black !important;
+    }
+
     .stButton > button {
         display: block;
         margin: 0 auto;
@@ -57,14 +65,9 @@ st.markdown("""
 
     .stButton > button:hover {
         background-color: #C8A7C9 !important;
-        color: black !important;
     }
 
-    .stMultiSelect span {
-        color: black !important;
-    }
-
-    label {
+    label, .css-1cpxqw2 {
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
     }
