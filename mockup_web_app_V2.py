@@ -210,16 +210,24 @@ if clear_cache:
     st.cache_resource.clear()
     st.cache_data.clear()
     st.rerun()
-
-# Display thumbnails in a 4-column layout after all are generated
+# Display thumbnails in a 4-column layout using in-memory bytes
 if st.session_state.generated_outputs:
+    import io
+    from PIL import Image
+
     cols = st.columns(4)
     for i, (filename, path) in enumerate(st.session_state.generated_outputs):
         with cols[i % 4]:
             if os.path.exists(path):
-                st.image(path, caption=filename, use_container_width="stretch")
+                try:
+                    with open(path, "rb") as f:
+                        img_bytes = f.read()
+                        image = Image.open(io.BytesIO(img_bytes))
+                        st.image(image, caption=filename, use_container_width="stretch")
+                except Exception as e:
+                    st.error(f"Failed to load {filename}: {e}")
             else:
-                st.warning(f"⚠️ Could not find file: {filename}")
+                st.warning(f"⚠️ Missing: {filename}")
 
     for filename, path in st.session_state.generated_outputs:
         if os.path.exists(path):
