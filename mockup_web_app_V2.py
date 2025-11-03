@@ -48,16 +48,19 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Remove purple highlight behind dropdown */
-    div[data-baseweb="select"] {
-        background-color: transparent !important;
+   /* Remove light purple highlight behind select dropdown */
+div[data-baseweb="select"] {
+    background-color: transparent !important;
+    box-shadow: none !important;
     }
 
-    div[data-baseweb="select"] > div {
-        background-color: #A27DA2 !important;
-        color: black !important;
+div[data-baseweb="select"] > div {
+    background-color: #A27DA2 !important;
+    color: black !important;
+    border: none !important;
+    box-shadow: none !important;
     }
-
+    
     /* Remove border focus */
     input:focus,
     textarea:focus,
