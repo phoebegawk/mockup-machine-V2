@@ -17,7 +17,7 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    html, body, [class*="css"]  {
+    html, body, .main, [class*="css"] {
         background-color: #542D54 !important;
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
