@@ -62,6 +62,22 @@ st.markdown("""
         background-color: transparent !important;
         box-shadow: none !important;
     }
+    /* Selected tags in multiselect dropdown */
+    div[data-baseweb="tag"] {
+    background-color: #542D54 !important;
+    color: white !important;
+    border-radius: 6px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    }
+
+    /* "Browse files" button text to purple */
+    section[data-testid="stFileUploader"] button {
+    background-color: #A27DA2 !important;
+    color: #542D54 !important;
+    font-weight: bold;
+    border: 1px solid white !important;
+    border-radius: 6px !important;
+    }
 
     /* Make multiselect placeholder and selected text white */
     div[data-baseweb="select"] div[role="combobox"] {
