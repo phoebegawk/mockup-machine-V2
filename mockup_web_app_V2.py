@@ -216,10 +216,16 @@ if st.session_state.generated_outputs:
     cols = st.columns(4)
     for i, (filename, path) in enumerate(st.session_state.generated_outputs):
         with cols[i % 4]:
-            st.image(path, caption=filename, use_container_width="stretch")
+            if os.path.exists(path):
+                st.image(path, caption=filename, use_container_width="stretch")
+            else:
+                st.warning(f"⚠️ Could not find file: {filename}")
 
-    for filename, _ in st.session_state.generated_outputs:
-        st.success(f"✅ Generated: {filename}")
+    for filename, path in st.session_state.generated_outputs:
+        if os.path.exists(path):
+            st.success(f"✅ Generated: {filename}")
+        else:
+            st.error(f"❌ Missing: {filename}")
 
 # Display error messages after generation
 if "generation_errors" in st.session_state:
