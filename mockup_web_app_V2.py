@@ -6,24 +6,34 @@ import streamlit as st
 from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
 from template_coordinates import TEMPLATE_COORDINATES
 
-st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
+st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
+# 💜 Top image
+st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", use_column_width=True)
+
+# 💅 Global styles
 st.markdown("""
     <style>
-    html, body, [class*="css"]  {
-        font-size: 18px !important;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    label, button, input, textarea, select {
-        font-size: 18px !important;
+    html, body, [class*="css"]  {
+        background-color: #542D54 !important;
+        color: white !important;
         font-family: 'Montserrat', sans-serif !important;
+        font-size: 18px !important;
     }
 
     .block-container {
         padding-top: 2rem !important;
     }
 
-    /* Ensure file uploader text is left-aligned */
+    input, textarea, select, .stTextInput input, .stFileUploader, .stMultiSelect, .stDateInput {
+        background-color: #A27DA2 !important;
+        color: #000 !important;
+        border: none !important;
+        font-family: 'Montserrat', sans-serif !important;
+    }
+
     section[data-testid="stFileUploader"] label > div {
         display: flex;
         flex-direction: column;
@@ -34,14 +44,28 @@ st.markdown("""
     section[data-testid="stFileUploader"] p {
         text-align: left;
     }
-    </style>
-""", unsafe_allow_html=True)
 
-st.markdown("""
-    <style>
     .stButton > button {
         display: block;
         margin: 0 auto;
+        background-color: #A27DA2 !important;
+        color: black !important;
+        border: none !important;
+        font-family: 'Montserrat', sans-serif !important;
+    }
+
+    .stButton > button:hover {
+        background-color: #C8A7C9 !important;
+        color: black !important;
+    }
+
+    .stMultiSelect span {
+        color: black !important;
+    }
+
+    label {
+        color: white !important;
+        font-family: 'Montserrat', sans-serif !important;
     }
     </style>
 """, unsafe_allow_html=True)
