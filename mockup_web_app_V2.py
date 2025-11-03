@@ -146,6 +146,7 @@ st.markdown("""
         outline: none !important;
         box-shadow: none !important;
     }
+    
     /* Browse files button with purple text */
     section[data-testid="stFileUploader"] button {
     background-color: #A27DA2 !important;
