@@ -203,12 +203,11 @@ if generate_clicked:
     st.cache_data.clear()
     st.rerun()
 
-# ✅ Display thumbnails in a 4-column layout using safe in-memory preview
+# ✅ Display thumbnails in a 4-column layout with resized previews
 if st.session_state.generated_outputs:
     import io
     from PIL import Image
 
-    st.markdown("### Preview Generated Mockups")
     cols = st.columns(4)
     for i, (filename, path) in enumerate(st.session_state.generated_outputs):
         with cols[i % 4]:
@@ -217,6 +216,7 @@ if st.session_state.generated_outputs:
                     with open(path, "rb") as f:
                         img_bytes = f.read()
                         image = Image.open(io.BytesIO(img_bytes))
+                        image.thumbnail((300, 300))  # Resize to max 300x300 for faster preview
                         st.image(image, caption=filename, use_container_width=True)
                 except Exception as e:
                     st.error(f"⚠️ Could not load {filename}: {e}")
