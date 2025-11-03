@@ -9,15 +9,15 @@ from template_coordinates import TEMPLATE_COORDINATES
 # UI Config
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
-# Top image
-st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", use_column_width=True)
+# Top header image with updated width parameter
+st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
 
-# Global styles
+# Global styles for Montserrat, colors, and updated layout
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    html, body, .main, [class*="css"] {
+    html, body, [class*="css"] {
         background-color: #542D54 !important;
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
@@ -30,7 +30,7 @@ st.markdown("""
 
     input, textarea, select, .stTextInput input, .stFileUploader, .stMultiSelect, .stDateInput {
         background-color: #A27DA2 !important;
-        color: #000 !important;
+        color: black !important;
         border: none !important;
         font-family: 'Montserrat', sans-serif !important;
     }
