@@ -91,7 +91,7 @@ st.markdown("""
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
-    generate_clicked = st.button("Generate", width="stretch")
+    generate_clicked = st.button("Generate", use_container_width=True)
 
 with col2:
     zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
@@ -128,7 +128,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 # Trigger generation logic
 if generate_clicked:
-    # Clear previous outputs and errors
+    st.write("DEBUG: Generate button clicked")
     st.session_state["generated_outputs"] = []
     st.session_state["generation_errors"] = []
 
@@ -148,7 +148,7 @@ if generate_clicked:
             if not template_data:
                 st.session_state["generation_errors"].append(f"Coordinates not found for {selected_template}.")
                 continue
-            # Determine whether to use single- or multi-panel logic
+
             panel_keys = [k for k in ("LHS", "MID", "RHS") if k in template_data]
             is_multi_panel = "split_ratios" in template_data and len(panel_keys) >= 2
             coords = template_data if is_multi_panel else template_data["LHS"]
@@ -160,7 +160,6 @@ if generate_clicked:
                     with open(artwork_path, "wb") as f:
                         f.write(artwork_file.getbuffer())
 
-                    # Remove extension and safely extract campaign name
                     filename_no_ext = os.path.splitext(artwork_file.name)[0]
                     parts = filename_no_ext.split(" - ")
 
@@ -168,6 +167,7 @@ if generate_clicked:
                         campaign_name = parts[1].strip()
                     else:
                         campaign_name = parts[-1].strip()
+
                     final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
                     output_path = os.path.join(OUTPUT_DIR, final_filename)
                     base, ext = os.path.splitext(output_path)
@@ -178,18 +178,27 @@ if generate_clicked:
                         counter += 1
                     output_path = temp_output_path
                     final_filename = os.path.basename(output_path)
-                    
+
                     if is_multi_panel:
                         generate_multi_panel_mockup(template_path, artwork_path, output_path, coords)
                     else:
                         generate_mockup(template_path, artwork_path, output_path, coords)
 
                     st.session_state["generated_outputs"].append((final_filename, output_path))
-                
+                    st.write(f"DEBUG: Generated {final_filename}")
+
                 except Exception as e:
                     st.session_state["generation_errors"].append(
                         f"❌ Error generating mockup for {selected_template}: {e}"
                     )
+                    st.error(f"DEBUG: Exception - {e}")
+
+# Clear cache and rerun
+    import time
+    time.sleep(0.5)
+    st.cache_resource.clear()
+    st.cache_data.clear()
+    st.rerun()
 
 # Clear cache outside of try block
 clear_cache = True  # Flag to control rerun
