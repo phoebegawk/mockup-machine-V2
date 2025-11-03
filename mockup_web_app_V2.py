@@ -17,7 +17,7 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    html, body, .main, .stApp {
+    html, body, .main, .stApp, .stAppViewContainer {
         background-color: #542D54 !important;
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
@@ -26,18 +26,21 @@ st.markdown("""
         padding: 0 !important;
     }
 
+    header, .st-emotion-cache-18ni7ap {
+        background-color: #542D54 !important;
+    }
+
     .block-container {
         padding-top: 2rem !important;
     }
 
-    /* All input fields & dropdowns */
+    /* Input fields, dropdowns, uploader container */
     .stTextInput input,
     .stTextArea textarea,
     .stDateInput input,
-    .stSelectbox,
-    .stFileUploader,
-    .stMultiSelect,
-    .stMultiSelect div[data-baseweb="select"] {
+    .stSelectbox > div,
+    .stMultiSelect > div,
+    section[data-testid="stFileUploader"] {
         background-color: #A27DA2 !important;
         color: black !important;
         border: none !important;
@@ -45,7 +48,7 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Remove focus highlight */
+    /* Clear outlines on focus */
     input:focus,
     textarea:focus,
     select:focus,
@@ -70,7 +73,7 @@ st.markdown("""
         text-align: left;
     }
 
-    /* Buttons */
+    /* Button styling */
     .stButton > button {
         display: block;
         margin: 0 auto;
@@ -85,7 +88,14 @@ st.markdown("""
         color: white !important;
     }
 
-    /* Labels and titles */
+    .stButton > button:disabled {
+        background-color: #d0c0d3 !important;
+        color: grey !important;
+        opacity: 0.5;
+        cursor: not-allowed !important;
+    }
+
+    /* Form labels */
     label, .css-1cpxqw2 {
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
