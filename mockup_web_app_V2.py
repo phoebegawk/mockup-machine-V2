@@ -17,27 +17,48 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    html, body, .main {
+    html, body, .main, .stApp {
         background-color: #542D54 !important;
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
         font-size: 18px !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .block-container {
         padding-top: 2rem !important;
     }
 
-    .stApp {
-        background-color: #542D54 !important;
-    }
-
-    .stTextInput input, .stTextArea textarea, .stDateInput input, .stMultiSelect div[data-baseweb="select"] {
+    /* All input fields & dropdowns */
+    .stTextInput input,
+    .stTextArea textarea,
+    .stDateInput input,
+    .stSelectbox,
+    .stFileUploader,
+    .stMultiSelect,
+    .stMultiSelect div[data-baseweb="select"] {
         background-color: #A27DA2 !important;
         color: black !important;
         border: none !important;
+        box-shadow: none !important;
+        font-family: 'Montserrat', sans-serif !important;
     }
 
+    /* Remove focus highlight */
+    input:focus,
+    textarea:focus,
+    select:focus,
+    .stSelectbox:focus,
+    .stFileUploader:focus,
+    .stMultiSelect:focus,
+    .stTextInput:focus,
+    .stDateInput:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Fix uploader label spacing */
     section[data-testid="stFileUploader"] label > div {
         display: flex;
         flex-direction: column;
@@ -49,24 +70,22 @@ st.markdown("""
         text-align: left;
     }
 
-    .stFileUploader {
-        background-color: #A27DA2 !important;
-        color: black !important;
-    }
-
+    /* Buttons */
     .stButton > button {
         display: block;
         margin: 0 auto;
         background-color: #A27DA2 !important;
-        color: black !important;
+        color: white !important;
         border: none !important;
         font-family: 'Montserrat', sans-serif !important;
     }
 
     .stButton > button:hover {
         background-color: #C8A7C9 !important;
+        color: white !important;
     }
 
+    /* Labels and titles */
     label, .css-1cpxqw2 {
         color: white !important;
         font-family: 'Montserrat', sans-serif !important;
