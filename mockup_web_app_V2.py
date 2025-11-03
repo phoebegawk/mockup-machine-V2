@@ -193,28 +193,22 @@ if generate_clicked:
                     )
                     st.error(f"DEBUG: Exception - {e}")
 
-# Clear cache and rerun
-    import time
-    time.sleep(0.5)
+# ✅ Controlled cache clear and rerun logic (safer and more stable)
+import time
+
+# Only clear caches and rerun once after generation completes
+if generate_clicked:
+    time.sleep(0.5)  # Allow Streamlit to settle after generation
     st.cache_resource.clear()
     st.cache_data.clear()
     st.rerun()
 
-# Clear cache outside of try block
-clear_cache = True  # Flag to control rerun
-
-# After the for-loop ends
-if clear_cache:
-    import time
-    time.sleep(0.5)  # Optional: give Streamlit time to release resources
-    st.cache_resource.clear()
-    st.cache_data.clear()
-    st.rerun()
-# Display thumbnails in a 4-column layout using in-memory bytes
+# ✅ Display thumbnails in a 4-column layout using safe in-memory preview
 if st.session_state.generated_outputs:
     import io
     from PIL import Image
 
+    st.markdown("### Preview Generated Mockups")
     cols = st.columns(4)
     for i, (filename, path) in enumerate(st.session_state.generated_outputs):
         with cols[i % 4]:
@@ -223,18 +217,21 @@ if st.session_state.generated_outputs:
                     with open(path, "rb") as f:
                         img_bytes = f.read()
                         image = Image.open(io.BytesIO(img_bytes))
-                        st.image(image, caption=filename, use_container_width="stretch")
+                        st.image(image, caption=filename, use_container_width=True)
                 except Exception as e:
-                    st.error(f"Failed to load {filename}: {e}")
+                    st.error(f"⚠️ Could not load {filename}: {e}")
             else:
-                st.warning(f"⚠️ Missing: {filename}")
+                st.warning(f"⚠️ Missing file: {filename}")
 
-    for filename, path in st.session_state.generated_outputs:
-        if os.path.exists(path):
-            st.success(f"✅ Generated: {filename}")
-        else:
-            st.error(f"❌ Missing: {filename}")
+# Summary feedback
+    successful = [f for f, p in st.session_state.generated_outputs if os.path.exists(p)]
+    missing = [f for f, p in st.session_state.generated_outputs if not os.path.exists(p)]
 
+    if successful:
+        st.success(f"✅ {len(successful)} mockup(s) generated successfully.")
+    if missing:
+        st.warning(f"⚠️ {len(missing)} mockup(s) missing or failed to load.")
+        
 # Display error messages after generation
 if "generation_errors" in st.session_state:
     for error in st.session_state["generation_errors"]:
