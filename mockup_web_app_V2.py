@@ -6,12 +6,13 @@ import streamlit as st
 from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
 from template_coordinates import TEMPLATE_COORDINATES
 
+# UI Config
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
-# 💜 Top image
+# Top image
 st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", use_column_width=True)
 
-# 💅 Global styles
+# Global styles
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
@@ -77,9 +78,6 @@ if "generated_outputs" not in st.session_state:
 TEMPLATE_DIR = "templates"
 OUTPUT_DIR = "generated_mockups"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-# UI Config
-st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
 # Template Selection
 template_keys = list(TEMPLATE_COORDINATES.keys())
