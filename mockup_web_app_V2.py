@@ -34,7 +34,7 @@ st.markdown("""
         padding-top: 2rem !important;
     }
 
-    /* Generic input styling */
+    /* Generic input + Streamlit widgets */
     input, textarea, select,
     .stTextInput input,
     .stTextArea textarea,
@@ -49,12 +49,13 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Multiselect dropdown */
+    /* Multiselect container */
     div[data-baseweb="select"] {
         background-color: transparent !important;
         box-shadow: none !important;
     }
 
+    /* Multiselect dropdown */
     div[data-baseweb="select"] > div {
         background-color: #A27DA2 !important;
         border: 1px solid white !important;
@@ -62,8 +63,15 @@ st.markdown("""
         color: white !important;
     }
 
-    div[data-baseweb="select"] span,
+    /* Remove stroke line (border/outline) from combobox */
     div[data-baseweb="select"] div[role="combobox"] {
+        color: white !important;
+        outline: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    div[data-baseweb="select"] span {
         color: white !important;
     }
 
@@ -75,7 +83,7 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* File uploader */
+    /* File uploader container */
     section[data-testid="stFileUploader"] {
         background-color: #A27DA2 !important;
         border: 1px solid white !important;
@@ -94,15 +102,17 @@ st.markdown("""
         text-align: left;
     }
 
+    /* Browse Files button — PURPLE TEXT */
     section[data-testid="stFileUploader"] button {
         background-color: #A27DA2 !important;
         color: #542D54 !important;
-        font-weight: bold;
+        font-weight: bold !important;
         border: 1px solid white !important;
         border-radius: 6px !important;
+        font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Main buttons */
+    /* Main buttons + download */
     .stButton > button,
     .stDownloadButton > button {
         display: block;
@@ -138,23 +148,13 @@ st.markdown("""
         font-family: 'Montserrat', sans-serif !important;
     }
 
-    /* Remove focus border glow */
+    /* Remove focus border glow from all inputs */
     input:focus,
     textarea:focus,
     select:focus,
     div[data-baseweb="select"]:focus {
         outline: none !important;
         box-shadow: none !important;
-    }
-    
-    /* Browse files button with purple text */
-    section[data-testid="stFileUploader"] button {
-    background-color: #A27DA2 !important;
-    color: #542D54 !important;
-    font-weight: bold;
-    border: 1px solid white !important;
-    border-radius: 6px !important;
-    font-family: 'Montserrat', sans-serif !important;
     }
     </style>
 """, unsafe_allow_html=True)
