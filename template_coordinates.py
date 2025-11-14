@@ -163,7 +163,7 @@ TEMPLATE_COORDINATES = {
             (669, 588),
         ]
     },
-    "Geelong East (Digital) Try Boys - 32191-D.png”: {
+    "Geelong East (Digital) Try Boys - 32191-D.png": {
         "split_ratio": [1.0],
         "LHS": [
         	(907, 243),
