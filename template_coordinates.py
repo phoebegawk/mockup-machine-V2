@@ -208,6 +208,15 @@ TEMPLATE_COORDINATES = {
             (393, 501),
         ]
     },
+    "Griffith (Digital) - 28605-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+        	(460, 289),
+        	(835, 320),
+        	(834, 421),
+        	(458, 400),
+        ]
+    },
     "Hamilton (Digital) - 33005-D.png": {
         "split_ratio": [1.0],
         "LHS": [
@@ -254,6 +263,15 @@ TEMPLATE_COORDINATES = {
             (1378, 403),
             (1380, 604),
             (670, 601),
+        ]
+    },
+    "Leeton (Digital) - 27051-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+        	(92, 433),
+        	(487, 446),
+        	(487, 539),
+        	(93, 536),
         ]
     },
     "Melton (Digital) - 33381-D.png": {
@@ -460,6 +478,15 @@ TEMPLATE_COORDINATES = {
             (852, 511),
         ]
     },
+    "Tamworth West (Digital) - 23405-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+        	(549, 418),
+        	(1000, 422),
+        	(998, 554),
+        	(550, 552),
+        ]
+    },
     "Torquay (Digital) - 32281-D.png": {
         "split_ratio": [1.0],
         "LHS": [
@@ -467,15 +494,6 @@ TEMPLATE_COORDINATES = {
             (1588, 459),
             (1587, 701),
             (742, 687)
-        ]
-    },
-    "Warragul (Digital) - 38203-D.png": {
-        "split_ratio": [1.0],
-        "LHS": [
-            (1623, 551),
-            (2274, 568),
-            (2282, 775),
-            (1628, 778)
         ]
     },
     "Traralgon (Digital) - 38441-D.png": {
@@ -509,6 +527,15 @@ TEMPLATE_COORDINATES = {
             (1096, 395),
             (1096, 568),
             (444, 567),
+        ]
+    },
+    "Warragul (Digital) - 38203-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (1623, 551),
+            (2274, 568),
+            (2282, 775),
+            (1628, 778)
         ]
     },
     "Warrnambool (Digital) - 32801-D.png": {
