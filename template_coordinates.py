@@ -28,6 +28,15 @@ TEMPLATE_COORDINATES = {
             (951, 661)
         ]
     },
+    "Ballarat (Digital) Mitchell Park - 33552-D.png”: {
+        "split_ratio": [1.0],
+        "LHS": [
+        	(599, 398),
+        	(1002, 393),
+        	(1001, 506),
+        	(596, 514),
+        ]
+    },
     "Ballarat (Digital) Wendouree - 33554-D.png": {
         "split_ratio": [1.0],
         "LHS": [
