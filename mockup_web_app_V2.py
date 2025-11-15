@@ -109,7 +109,21 @@ st.markdown("""
         font-weight: bold !important;
         border: 1px solid white !important;
         border-radius: 6px !important;
-        font-family: 'Montserrat', sans-serif !important;
+        font-family: 'Montserrat', sans-serif' !important;
+    }
+
+    /* Fix hover state */
+    section[data-testid="stFileUploader"] button:hover {
+        background-color: #C8A7C9 !important;
+        color: #542D54 !important;
+    }
+
+    /* Fix disabled state */
+    section[data-testid="stFileUploader"] button:disabled {
+        background-color: #d0c0d3 !important;
+        color: #542D54 !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
     }
 
     /* Main buttons + download */
