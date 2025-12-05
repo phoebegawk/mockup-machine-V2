@@ -274,6 +274,15 @@ TEMPLATE_COORDINATES = {
         	(93, 540),
         ]
     },
+    "Lismore (Digital) - 24801-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+        	(475, 238),
+        	(861, 252),
+        	(863, 361),
+        	(476, 355),
+        ]
+    },
     "Melton (Digital) - 33381-D.png": {
         "split_ratio": [1.0],
         "LHS": [
