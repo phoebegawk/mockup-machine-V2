@@ -6,6 +6,20 @@ import streamlit as st
 from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
 from template_coordinates import TEMPLATE_COORDINATES
 
+# --- Artwork Safety Limits ---
+MAX_EDGE = 8000            # max width/height in pixels
+MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
+
+# Final safety load before generation (won't resize again)
+try:
+    img_check = Image.open(artwork_path)
+    w, h = img_check.size
+    if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
+        raise ValueError(f"Image still exceeds safe limits after resize: {w}×{h}")
+except Exception as e:
+    st.session_state["generation_errors"].append(f"❌ Artwork issue for {artwork_file.name}: {e}")
+    continue
+
 # UI Config
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
@@ -190,17 +204,46 @@ selected_templates = [name + ".png" for name in selected_display_names]
 # Artwork Upload
 artwork_files = st.file_uploader("🖼️ Upload Artwork File(s):", type=["jpg", "jpeg"], accept_multiple_files=True)
 
-# Artwork preview with filename
+# Artwork preview with filename (SAFE VERSION WITH LIMIT + AUTO-RESIZE)
 if artwork_files:
     os.makedirs("uploaded_artwork", exist_ok=True)
-    
+
     cols = st.columns(4)  # Up to 4 previews per row
+
     for idx, file in enumerate(artwork_files):
         artwork_path = os.path.join("uploaded_artwork", file.name)
-        with open(artwork_path, "wb") as f:
-            f.write(file.getbuffer())
+
+        try:
+            # Load image into Pillow
+            img = Image.open(file)
+            width, height = img.size
+            total_pixels = width * height
+
+            # Check if image exceeds safe limits
+            if total_pixels > MAX_PIXELS or max(width, height) > MAX_EDGE:
+                st.warning(
+                    f"⚠️ {file.name} is very large ({width}×{height}). "
+                    f"It will be automatically resized to stay under the safe limit "
+                    f"({MAX_EDGE}px max edge / 50MP)."
+                )
+
+                # Calculate proportional scale
+                scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
+                new_size = (int(width * scale_factor), int(height * scale_factor))
+
+                # Resize using high-quality resampling
+                img = img.resize(new_size, Image.LANCZOS)
+
+            # Save processed (or original) image
+            img.save(artwork_path, "JPEG", quality=95)
+
+        except Exception as e:
+            st.error(f"❌ Error processing {file.name}: {e}")
+            continue
+
+        # Display preview
         with cols[idx % 4]:
-            st.image(artwork_path, caption=file.name, width="stretch")
+            st.image(artwork_path, caption=file.name, use_container_width=True)
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
 
 # Client & Date Input
