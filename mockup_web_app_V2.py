@@ -14,7 +14,7 @@ MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
 # Header
-st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", width="stretch")
+st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", use_container_width=True)
 
 # Style Block
 st.markdown("""
@@ -204,7 +204,7 @@ if artwork_files:
         artwork_path = os.path.join("uploaded_artwork", file.name)
 
         try:
-            # Load image into Pillow
+            # Load uploaded file into Pillow
             img = Image.open(file)
             width, height = img.size
             total_pixels = width * height
@@ -217,15 +217,23 @@ if artwork_files:
                     f"({MAX_EDGE}px max edge / 50MP)."
                 )
 
-                # Calculate proportional scale
+                # Auto-resize proportionally
                 scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
                 new_size = (int(width * scale_factor), int(height * scale_factor))
-
-                # Resize using high-quality resampling
                 img = img.resize(new_size, Image.LANCZOS)
 
-            # Save processed (or original) image
+            # Save processed or original image
             img.save(artwork_path, "JPEG", quality=95)
+
+            # --- Final safety check (image MUST be safe at this point) ---
+            img_check = Image.open(artwork_path)
+            w, h = img_check.size
+            if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
+                st.error(
+                    f"❌ {file.name} still exceeds safe size after resizing: {w}×{h}. "
+                    "This file may be corrupted or unsupported."
+                )
+                continue
 
         except Exception as e:
             st.error(f"❌ Error processing {file.name}: {e}")
@@ -235,16 +243,6 @@ if artwork_files:
         with cols[idx % 4]:
             st.image(artwork_path, caption=file.name, use_container_width=True)
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
-
-# Final safety load before generation (won't resize again)
-try:
-    img_check = Image.open(artwork_path)
-    w, h = img_check.size
-    if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
-        raise ValueError(f"Image still exceeds safe limits after resize: {w}×{h}")
-except Exception as e:
-    st.session_state["generation_errors"].append(f"❌ Artwork issue for {artwork_file.name}: {e}")
-    continue
 
 # Client & Date Input
 client_name = st.text_input("🔍 Client Name:")
@@ -278,7 +276,7 @@ with col2:
                 file_name=zip_name,
                 mime="application/zip",
                 key="download_button_ready",
-                use_container_width="stretch"
+                use_container_width=True
             )
     else:
         st.download_button(
@@ -288,7 +286,7 @@ with col2:
             mime="application/zip",
             key="download_button_disabled",
             disabled=True,
-            use_container_width="stretch"
+            use_container_width=True
         )
 
 st.markdown("</div>", unsafe_allow_html=True)
