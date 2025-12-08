@@ -10,16 +10,6 @@ from template_coordinates import TEMPLATE_COORDINATES
 MAX_EDGE = 8000            # max width/height in pixels
 MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
 
-# Final safety load before generation (won't resize again)
-try:
-    img_check = Image.open(artwork_path)
-    w, h = img_check.size
-    if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
-        raise ValueError(f"Image still exceeds safe limits after resize: {w}×{h}")
-except Exception as e:
-    st.session_state["generation_errors"].append(f"❌ Artwork issue for {artwork_file.name}: {e}")
-    continue
-
 # UI Config
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
@@ -245,6 +235,16 @@ if artwork_files:
         with cols[idx % 4]:
             st.image(artwork_path, caption=file.name, use_container_width=True)
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
+
+# Final safety load before generation (won't resize again)
+try:
+    img_check = Image.open(artwork_path)
+    w, h = img_check.size
+    if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
+        raise ValueError(f"Image still exceeds safe limits after resize: {w}×{h}")
+except Exception as e:
+    st.session_state["generation_errors"].append(f"❌ Artwork issue for {artwork_file.name}: {e}")
+    continue
 
 # Client & Date Input
 client_name = st.text_input("🔍 Client Name:")
