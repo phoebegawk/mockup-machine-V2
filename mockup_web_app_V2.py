@@ -75,19 +75,23 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* Placeholder text ("Choose options") -> WHITE */
+    /* "Choose options" + multiselect typed text -> WHITE (overrides global input color:black) */
+    div[data-baseweb="select"] input {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+    }
+
     div[data-baseweb="select"] input::placeholder {
         color: #FFFFFF !important;
         opacity: 1 !important;
+        -webkit-text-fill-color: #FFFFFF !important;
     }
 
-    /* Some Streamlit builds render placeholder as plain text node */
-    div[data-baseweb="select"] div[role="combobox"] * {
+    /* "Choose options" is often rendered as text/span inside combobox (not placeholder) */
+    div[data-baseweb="select"] div[role="combobox"] span,
+    div[data-baseweb="select"] div[role="combobox"] div,
+    div[data-baseweb="select"] div[role="combobox"] p {
         color: #FFFFFF !important;
-    }
-
-    div[data-baseweb="select"] span {
-        color: white !important;
     }
 
     /* Multiselect selected tags/chips -> Gawk Purple */
@@ -121,6 +125,14 @@ st.markdown("""
         box-shadow: none !important;
     }
 
+    /* Uploaded file name text -> WHITE */
+    section[data-testid="stFileUploader"] ul,
+    section[data-testid="stFileUploader"] li,
+    section[data-testid="stFileUploader"] li * {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+    }
+
     section[data-testid="stFileUploader"] label > div {
         display: flex;
         flex-direction: column;
@@ -132,9 +144,18 @@ st.markdown("""
         text-align: left;
     }
 
-    /* Browse Files button — make text visible (GREY) */
+    /* Browse files button text + icon -> GREY (visible on light container) */
     section[data-testid="stFileUploader"] button,
+    section[data-testid="stFileUploader"] button span,
     section[data-testid="stFileUploader"] button * {
+        color: #6B6B6B !important;
+        -webkit-text-fill-color: #6B6B6B !important;
+    }
+
+    /* SVG icon inside the button */
+    section[data-testid="stFileUploader"] button svg,
+    section[data-testid="stFileUploader"] button svg * {
+        fill: #6B6B6B !important;
         color: #6B6B6B !important;
     }
 
