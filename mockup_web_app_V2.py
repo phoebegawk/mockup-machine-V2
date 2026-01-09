@@ -75,16 +75,42 @@ st.markdown("""
         box-shadow: none !important;
     }
 
+    /* Placeholder text ("Choose options") -> WHITE */
+    div[data-baseweb="select"] input::placeholder {
+        color: #FFFFFF !important;
+        opacity: 1 !important;
+    }
+
+    /* Some Streamlit builds render placeholder as plain text node */
+    div[data-baseweb="select"] div[role="combobox"] * {
+        color: #FFFFFF !important;
+    }
+
     div[data-baseweb="select"] span {
         color: white !important;
     }
 
-    /* Multiselect selected tags */
-    div[data-baseweb="tag"] {
+    /* Multiselect selected tags/chips -> Gawk Purple */
+    div[data-baseweb="tag"],
+    span[data-baseweb="tag"] {
         background-color: #542D54 !important;
-        color: white !important;
+        color: #FFFFFF !important;
         border-radius: 6px !important;
+        border: 1px solid #542D54 !important;
         font-family: 'Montserrat', sans-serif !important;
+    }
+
+    /* Tag text */
+    div[data-baseweb="tag"] span,
+    span[data-baseweb="tag"] span {
+        color: #FFFFFF !important;
+    }
+
+    /* Tag remove "x" icon */
+    div[data-baseweb="tag"] svg,
+    span[data-baseweb="tag"] svg {
+        fill: #FFFFFF !important;
+        color: #FFFFFF !important;
     }
 
     /* File uploader container */
@@ -106,14 +132,10 @@ st.markdown("""
         text-align: left;
     }
 
-    /* Browse Files button — PURPLE TEXT */
-    section[data-testid="stFileUploader"] button {
-        background-color: #A27DA2 !important;
-        color: #542D54 !important;
-        font-weight: bold !important;
-        border: 1px solid white !important;
-        border-radius: 6px !important;
-        font-family: 'Montserrat', sans-serif' !important;
+    /* Browse Files button — make text visible (GREY) */
+    section[data-testid="stFileUploader"] button,
+    section[data-testid="stFileUploader"] button * {
+        color: #6B6B6B !important;
     }
 
     /* Fix hover state */
