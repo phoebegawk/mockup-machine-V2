@@ -336,7 +336,6 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 # Trigger generation logic
 if generate_clicked:
-    st.write("DEBUG: Generate button clicked")
     st.session_state["generated_outputs"] = []
     st.session_state["generation_errors"] = []
 
@@ -397,13 +396,12 @@ if generate_clicked:
                         generate_mockup(template_path, artwork_path, output_path, coords)
 
                     st.session_state["generated_outputs"].append((final_filename, output_path))
-                    st.write(f"DEBUG: Generated {final_filename}")
 
                 except Exception as e:
                     st.session_state["generation_errors"].append(
                         f"❌ Error generating mockup for {selected_template}: {e}"
                     )
-                    st.error(f"DEBUG: Exception - {e}")
+                    st.error("❌ An error occurred while generating this mockup.")
 
 # ✅ Display thumbnails in a 4-column layout (lower memory)
 if st.session_state.generated_outputs:
