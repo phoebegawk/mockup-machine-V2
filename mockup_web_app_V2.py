@@ -223,6 +223,12 @@ st.markdown("""
 if "generated_outputs" not in st.session_state:
     st.session_state["generated_outputs"] = []
 
+if "zip_bytes" not in st.session_state:
+    st.session_state["zip_bytes"] = None
+
+if "zip_name" not in st.session_state:
+    st.session_state["zip_name"] = None
+
 # Paths
 TEMPLATE_DIR = "Templates"
 OUTPUT_DIR = "generated_mockups"
@@ -302,35 +308,17 @@ with col1:
     generate_clicked = st.button("Generate", use_container_width=True)
 
 with col2:
-    zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
-    zip_path = os.path.join("generated_mockups", zip_name)
+    is_ready = st.session_state["zip_bytes"] is not None
 
-    is_ready = bool(st.session_state.generated_outputs)
-
-    if is_ready and (not os.path.exists(zip_path) or generate_clicked):
-        with zipfile.ZipFile(zip_path, "w") as zipf:
-            for filename, file_path in st.session_state.generated_outputs:
-                zipf.write(file_path, arcname=filename)
-
-        with open(zip_path, "rb") as f:
-            st.download_button(
-                label="Download Mock Ups",
-                data=f,
-                file_name=zip_name,
-                mime="application/zip",
-                key="download_button_ready",
-                use_container_width=True
-            )
-    else:
-        st.download_button(
-            label="Download Mock Ups",
-            data=b"",
-            file_name="",
-            mime="application/zip",
-            key="download_button_disabled",
-            disabled=True,
-            use_container_width=True
-        )
+    st.download_button(
+        label="Download Mock Ups",
+        data=st.session_state["zip_bytes"] if is_ready else b"",
+        file_name=st.session_state["zip_name"] if is_ready else "mockups.zip",
+        mime="application/zip",
+        disabled=not is_ready,
+        use_container_width=True,
+        key="download_button"
+    )
 
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -338,6 +326,8 @@ st.markdown("</div>", unsafe_allow_html=True)
 if generate_clicked:
     st.session_state["generated_outputs"] = []
     st.session_state["generation_errors"] = []
+    st.session_state["zip_bytes"] = None
+    st.session_state["zip_name"] = None
 
     if not selected_templates:
         st.session_state["generation_errors"].append("Please select at least one template.")
@@ -349,6 +339,7 @@ if generate_clicked:
         for selected_template in selected_templates:
             if not selected_template.endswith(".png"):
                 selected_template += ".png"
+
             template_path = os.path.join(TEMPLATE_DIR, "Digital", selected_template)
 
             template_data = TEMPLATE_COORDINATES.get(selected_template)
@@ -364,8 +355,7 @@ if generate_clicked:
                 try:
                     artwork_path = os.path.join("uploaded_artwork", artwork_file.name)
 
-                    # Use the already-saved (and possibly resized) file from the preview step.
-                    # If it doesn't exist for some reason, then write it once.
+                    # If preview step didn't write it for some reason, write it now
                     if not os.path.exists(artwork_path):
                         os.makedirs("uploaded_artwork", exist_ok=True)
                         with open(artwork_path, "wb") as f:
@@ -380,13 +370,16 @@ if generate_clicked:
                         campaign_name = parts[-1].strip()
 
                     final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
+
                     output_path = os.path.join(OUTPUT_DIR, final_filename)
                     base, ext = os.path.splitext(output_path)
+
                     counter = 1
                     temp_output_path = output_path
                     while os.path.exists(temp_output_path):
                         temp_output_path = f"{base}_{counter}{ext}"
                         counter += 1
+
                     output_path = temp_output_path
                     final_filename = os.path.basename(output_path)
 
@@ -401,10 +394,25 @@ if generate_clicked:
                     st.session_state["generation_errors"].append(
                         f"❌ Error generating mockup for {selected_template}: {e}"
                     )
-                    st.error("❌ An error occurred while generating this mockup.")
+
+        # ✅ Build ZIP bytes immediately so Download activates on the same click
+        if st.session_state["generated_outputs"]:
+            import io
+
+            zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
+            buffer = io.BytesIO()
+
+            with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+                for filename, file_path in st.session_state["generated_outputs"]:
+                    if os.path.exists(file_path):
+                        zipf.write(file_path, arcname=filename)
+
+            buffer.seek(0)
+            st.session_state["zip_bytes"] = buffer.getvalue()
+            st.session_state["zip_name"] = zip_name
 
 # ✅ Display thumbnails in a 4-column layout (lower memory)
-if st.session_state.generated_outputs:
+if st.session_state["generated_outputs"]:
     from PIL import Image
 
     cols = st.columns(4)
