@@ -233,10 +233,6 @@ if "zip_name" not in st.session_state:
 if "rerun_after_generate" not in st.session_state:
     st.session_state["rerun_after_generate"] = False
 
-# If we reran after generating, clear the flag so it doesn't loop
-if st.session_state["rerun_after_generate"]:
-    st.session_state["rerun_after_generate"] = False
-
 # Paths
 TEMPLATE_DIR = "Templates"
 OUTPUT_DIR = "generated_mockups"
