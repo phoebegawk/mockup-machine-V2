@@ -229,6 +229,14 @@ if "zip_bytes" not in st.session_state:
 if "zip_name" not in st.session_state:
     st.session_state["zip_name"] = None
 
+# ✅ one-click download: rerun once after generating
+if "rerun_after_generate" not in st.session_state:
+    st.session_state["rerun_after_generate"] = False
+
+# If we reran after generating, clear the flag so it doesn't loop
+if st.session_state["rerun_after_generate"]:
+    st.session_state["rerun_after_generate"] = False
+
 # Paths
 TEMPLATE_DIR = "Templates"
 OUTPUT_DIR = "generated_mockups"
@@ -410,6 +418,10 @@ if generate_clicked:
             buffer.seek(0)
             st.session_state["zip_bytes"] = buffer.getvalue()
             st.session_state["zip_name"] = zip_name
+
+            # ✅ Force immediate rerun so the Download button sees zip_bytes right away
+            st.session_state["rerun_after_generate"] = True
+            st.rerun()
 
 # ✅ Display thumbnails in a 4-column layout (lower memory)
 if st.session_state["generated_outputs"]:
