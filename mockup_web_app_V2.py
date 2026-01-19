@@ -224,7 +224,7 @@ if "generated_outputs" not in st.session_state:
     st.session_state["generated_outputs"] = []
 
 # Paths
-TEMPLATE_DIR = "templates"
+TEMPLATE_DIR = "Templates"
 OUTPUT_DIR = "generated_mockups"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -307,7 +307,7 @@ with col2:
 
     is_ready = bool(st.session_state.generated_outputs)
 
-    if is_ready:
+    if is_ready and (not os.path.exists(zip_path) or generate_clicked):
         with zipfile.ZipFile(zip_path, "w") as zipf:
             for filename, file_path in st.session_state.generated_outputs:
                 zipf.write(file_path, arcname=filename)
@@ -350,7 +350,7 @@ if generate_clicked:
         for selected_template in selected_templates:
             if not selected_template.endswith(".png"):
                 selected_template += ".png"
-            template_path = os.path.join("Templates", "Digital", selected_template)
+            template_path = os.path.join(TEMPLATE_DIR, "Digital", selected_template)
 
             template_data = TEMPLATE_COORDINATES.get(selected_template)
             if not template_data:
@@ -364,9 +364,13 @@ if generate_clicked:
             for artwork_file in artwork_files:
                 try:
                     artwork_path = os.path.join("uploaded_artwork", artwork_file.name)
-                    os.makedirs("uploaded_artwork", exist_ok=True)
-                    with open(artwork_path, "wb") as f:
-                        f.write(artwork_file.getbuffer())
+
+                    # Use the already-saved (and possibly resized) file from the preview step.
+                    # If it doesn't exist for some reason, then write it once.
+                    if not os.path.exists(artwork_path):
+                        os.makedirs("uploaded_artwork", exist_ok=True)
+                        with open(artwork_path, "wb") as f:
+                            f.write(artwork_file.getbuffer())
 
                     filename_no_ext = os.path.splitext(artwork_file.name)[0]
                     parts = filename_no_ext.split(" - ")
@@ -401,19 +405,8 @@ if generate_clicked:
                     )
                     st.error(f"DEBUG: Exception - {e}")
 
-# ✅ Controlled cache clear and rerun logic (safer and more stable)
-import time
-
-# Only clear caches and rerun once after generation completes
-if generate_clicked:
-    time.sleep(0.5)  # Allow Streamlit to settle after generation
-    st.cache_resource.clear()
-    st.cache_data.clear()
-    st.rerun()
-
-# ✅ Display thumbnails in a 4-column layout with resized previews
+# ✅ Display thumbnails in a 4-column layout (lower memory)
 if st.session_state.generated_outputs:
-    import io
     from PIL import Image
 
     cols = st.columns(4)
@@ -421,11 +414,9 @@ if st.session_state.generated_outputs:
         with cols[i % 4]:
             if os.path.exists(path):
                 try:
-                    with open(path, "rb") as f:
-                        img_bytes = f.read()
-                        image = Image.open(io.BytesIO(img_bytes))
-                        image.thumbnail((300, 300))  # Resize to max 300x300 for faster preview
-                        st.image(image, caption=filename, use_container_width=True)
+                    img = Image.open(path)
+                    img.thumbnail((300, 300))
+                    st.image(img, caption=filename, use_container_width=True)
                 except Exception as e:
                     st.error(f"⚠️ Could not load {filename}: {e}")
             else:
@@ -444,13 +435,3 @@ if st.session_state.generated_outputs:
 if "generation_errors" in st.session_state:
     for error in st.session_state["generation_errors"]:
         st.error(error)
-
-# Safely check and prepare generated_outputs
-if "generated_outputs" in st.session_state and st.session_state.generated_outputs:
-    zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
-    zip_path = os.path.join("generated_mockups", zip_name)
-
-    # Create ZIP with all generated mockups
-    with zipfile.ZipFile(zip_path, "w") as zipf:
-        for filename, file_path in st.session_state.generated_outputs:
-            zipf.write(file_path, arcname=filename)
