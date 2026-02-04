@@ -208,6 +208,24 @@ TEMPLATE_COORDINATES = {
             (682, 564),
         ]
     },
+    "Geelong (Digital) Lara - 32122-D-A.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (583, 304),
+            (1023, 306),
+            (1023, 419),
+            (581, 421),
+        ]
+    },
+    "Geelong (Digital) Lara - 32122-D-B.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (591, 354),
+            (1148, 358),
+            (1149, 516),
+            (595, 511),
+        ]
+    },
     "Gosford (Digital) - 22501-D.png": {
         "split_ratio": [1.0],
         "LHS": [
@@ -398,6 +416,15 @@ TEMPLATE_COORDINATES = {
             (977, 674),
             (976, 851),
             (391, 850)
+        ]
+    },
+    "Rosebud (Digital) - 39391-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (600, 349),
+            (978, 346),
+            (979, 449),
+            (602, 451),
         ]
     },
     "Sale (Digital) - 38502-D.png": {
