@@ -106,6 +106,15 @@ TEMPLATE_COORDINATES = {
             (1274, 641),
         ]
     },
+    "Bendigo (Digital) - 35502-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (633, 366),
+            (938, 363),
+            (939, 523),
+            (633, 521),
+        ]
+    },
     "Cobram (Digital) - 36442-D.png": {
         "split_ratio": [1.0],
         "LHS": [
