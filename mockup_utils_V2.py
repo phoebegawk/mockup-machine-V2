@@ -45,7 +45,18 @@ def find_perspective_transform(src, dst):
 
 def warp_panel(image, src_points, dst_points, size):
     matrix = cv2.getPerspectiveTransform(np.float32(src_points), np.float32(dst_points))
-    return cv2.warpPerspective(image, matrix, size, flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
+
+    # IMPORTANT:
+    # BORDER_TRANSPARENT can leave unwritten pixels (random green/black banding).
+    # BORDER_CONSTANT ensures anything outside the warped quad becomes true transparent pixels.
+    return cv2.warpPerspective(
+        image,
+        matrix,
+        size,
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(0, 0, 0, 0)  # transparent RGBA
+    )
 
 def split_artwork_by_ratios(artwork_img, ratios):
     total_width, height = artwork_img.size
