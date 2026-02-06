@@ -10,7 +10,9 @@ from template_coordinates import TEMPLATE_COORDINATES
 MAX_EDGE = 8000            # max width/height in pixels
 MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
 
+# ---------------------------
 # UI Config
+# ---------------------------
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
 # Header
@@ -19,212 +21,218 @@ st.image(
     use_container_width=True
 )
 
-# Style Block
+# ---------------------------
+# Style Block (FULL, CLEAN)
+# ---------------------------
 st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
-    html, body, .main, .stApp, .stAppViewContainer {
-    background-color: #542D54; /* fallback */
-    background-image: url("/MockUpMachine-BG.png");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center center;
-    background-attachment: fixed;
+/* Background image (Streamlit-safe) */
+.stApp {
+    background-color: #542D54 !important; /* fallback */
+    background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine-V2/main/assets/MockUpMachine-BG.png") !important;
+    background-repeat: no-repeat !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+}
 
-    color: #FFFFFF;
-    margin: 0;
-    padding: 0;
-    }
+/* Ensure nested containers don't paint over the background */
+html, body, .main, .stAppViewContainer {
+    background-color: transparent !important;
+    color: white !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
 
-    header, .st-emotion-cache-18ni7ap {
-        background-color: #542D54 !important;
-    }
+header, .st-emotion-cache-18ni7ap {
+    background-color: #542D54 !important;
+}
 
-    .block-container {
-        padding-top: 2rem !important;
-    }
+.block-container {
+    padding-top: 2rem !important;
+}
 
-    /* Generic input + Streamlit widgets */
-    input, textarea, select,
-    .stTextInput input,
-    .stTextArea textarea,
-    .stDateInput input,
-    .stMultiSelect > div,
-    .stSelectbox > div {
-        border-radius: 8px !important;
-        border: 1px solid white !important;
-        box-shadow: none !important;
-        background-color: #A27DA2 !important;
-        color: black !important;
-        font-family: 'Montserrat', sans-serif !important;
-    }
+/* Generic input + Streamlit widgets */
+input, textarea, select,
+.stTextInput input,
+.stTextArea textarea,
+.stDateInput input,
+.stMultiSelect > div,
+.stSelectbox > div {
+    border-radius: 8px !important;
+    border: 1px solid white !important;
+    box-shadow: none !important;
+    background-color: #A27DA2 !important;
+    color: black !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
 
-    /* Multiselect container */
-    div[data-baseweb="select"] {
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
+/* Multiselect container */
+div[data-baseweb="select"] {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
 
-    /* Multiselect dropdown */
-    div[data-baseweb="select"] > div {
-        background-color: #A27DA2 !important;
-        border: 1px solid white !important;
-        border-radius: 8px !important;
-        color: white !important;
-    }
+/* Multiselect dropdown */
+div[data-baseweb="select"] > div {
+    background-color: #A27DA2 !important;
+    border: 1px solid white !important;
+    border-radius: 8px !important;
+    color: white !important;
+}
 
-    /* Remove stroke line (border/outline) from combobox */
-    div[data-baseweb="select"] div[role="combobox"] {
-        color: white !important;
-        outline: none !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
+/* Remove stroke line (border/outline) from combobox */
+div[data-baseweb="select"] div[role="combobox"] {
+    color: white !important;
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
 
-    /* "Choose options" + multiselect typed text -> WHITE (overrides global input color:black) */
-    div[data-baseweb="select"] input {
-        color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
-    }
+/* "Choose options" + typed text -> WHITE */
+div[data-baseweb="select"] input {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
 
-    div[data-baseweb="select"] input::placeholder {
-        color: #FFFFFF !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: #FFFFFF !important;
-    }
+div[data-baseweb="select"] input::placeholder {
+    color: #FFFFFF !important;
+    opacity: 1 !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
 
-    /* "Choose options" is often rendered as text/span inside combobox (not placeholder) */
-    div[data-baseweb="select"] div[role="combobox"] span,
-    div[data-baseweb="select"] div[role="combobox"] div,
-    div[data-baseweb="select"] div[role="combobox"] p {
-        color: #FFFFFF !important;
-    }
+/* "Choose options" sometimes rendered as spans */
+div[data-baseweb="select"] div[role="combobox"] span,
+div[data-baseweb="select"] div[role="combobox"] div,
+div[data-baseweb="select"] div[role="combobox"] p {
+    color: #FFFFFF !important;
+}
 
-    /* Multiselect selected tags/chips -> Gawk Purple */
-    div[data-baseweb="tag"],
-    span[data-baseweb="tag"] {
-        background-color: #542D54 !important;
-        color: #FFFFFF !important;
-        border-radius: 6px !important;
-        border: 1px solid #542D54 !important;
-        font-family: 'Montserrat', sans-serif !important;
-    }
+/* Selected tags/chips -> Gawk Purple */
+div[data-baseweb="tag"],
+span[data-baseweb="tag"] {
+    background-color: #542D54 !important;
+    color: #FFFFFF !important;
+    border-radius: 6px !important;
+    border: 1px solid #542D54 !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
 
-    /* Tag text */
-    div[data-baseweb="tag"] span,
-    span[data-baseweb="tag"] span {
-        color: #FFFFFF !important;
-    }
+/* Tag text */
+div[data-baseweb="tag"] span,
+span[data-baseweb="tag"] span {
+    color: #FFFFFF !important;
+}
 
-    /* Tag remove "x" icon */
-    div[data-baseweb="tag"] svg,
-    span[data-baseweb="tag"] svg {
-        fill: #FFFFFF !important;
-        color: #FFFFFF !important;
-    }
+/* Tag remove icon */
+div[data-baseweb="tag"] svg,
+span[data-baseweb="tag"] svg {
+    fill: #FFFFFF !important;
+    color: #FFFFFF !important;
+}
 
-    /* File uploader container */
-    section[data-testid="stFileUploader"] {
-        background-color: #A27DA2 !important;
-        border: 1px solid white !important;
-        border-radius: 8px !important;
-        box-shadow: none !important;
-    }
+/* File uploader container */
+section[data-testid="stFileUploader"] {
+    background-color: #A27DA2 !important;
+    border: 1px solid white !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
 
-    /* Uploaded file name text -> WHITE */
-    section[data-testid="stFileUploader"] ul,
-    section[data-testid="stFileUploader"] li,
-    section[data-testid="stFileUploader"] li * {
-        color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
-    }
+/* Uploaded file name text -> WHITE */
+section[data-testid="stFileUploader"] ul,
+section[data-testid="stFileUploader"] li,
+section[data-testid="stFileUploader"] li * {
+    color: #FFFFFF !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+}
 
-    section[data-testid="stFileUploader"] label > div {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
-    }
+section[data-testid="stFileUploader"] label > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
 
-    section[data-testid="stFileUploader"] p {
-        text-align: left;
-    }
+section[data-testid="stFileUploader"] p {
+    text-align: left;
+}
 
-    /* Browse files button text + icon -> GREY (visible on light container) */
-    section[data-testid="stFileUploader"] button,
-    section[data-testid="stFileUploader"] button span,
-    section[data-testid="stFileUploader"] button * {
-        color: #6B6B6B !important;
-        -webkit-text-fill-color: #6B6B6B !important;
-    }
+/* Browse button text + icon -> GREY */
+section[data-testid="stFileUploader"] button,
+section[data-testid="stFileUploader"] button span,
+section[data-testid="stFileUploader"] button * {
+    color: #6B6B6B !important;
+    -webkit-text-fill-color: #6B6B6B !important;
+}
 
-    /* SVG icon inside the button */
-    section[data-testid="stFileUploader"] button svg,
-    section[data-testid="stFileUploader"] button svg * {
-        fill: #6B6B6B !important;
-        color: #6B6B6B !important;
-    }
+section[data-testid="stFileUploader"] button svg,
+section[data-testid="stFileUploader"] button svg * {
+    fill: #6B6B6B !important;
+    color: #6B6B6B !important;
+}
 
-    /* Fix hover state */
-    section[data-testid="stFileUploader"] button:hover {
-        background-color: #C8A7C9 !important;
-        color: #542D54 !important;
-    }
+section[data-testid="stFileUploader"] button:hover {
+    background-color: #C8A7C9 !important;
+    color: #542D54 !important;
+}
 
-    /* Fix disabled state */
-    section[data-testid="stFileUploader"] button:disabled {
-        background-color: #d0c0d3 !important;
-        color: #542D54 !important;
-        opacity: 0.5 !important;
-        cursor: not-allowed !important;
-    }
+section[data-testid="stFileUploader"] button:disabled {
+    background-color: #d0c0d3 !important;
+    color: #542D54 !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
 
-    /* Main buttons + download */
-    .stButton > button,
-    .stDownloadButton > button {
-        display: block;
-        margin: 0 auto;
-        background-color: #A27DA2 !important;
-        color: white !important;
-        border: 1px solid white !important;
-        border-radius: 8px !important;
-        font-family: 'Montserrat', sans-serif !important;
-    }
+/* Main buttons + download */
+.stButton > button,
+.stDownloadButton > button {
+    display: block;
+    margin: 0 auto;
+    background-color: #A27DA2 !important;
+    color: white !important;
+    border: 1px solid white !important;
+    border-radius: 8px !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
 
-    .stButton > button:hover {
-        background-color: #C8A7C9 !important;
-        color: white !important;
-    }
+.stButton > button:hover {
+    background-color: #C8A7C9 !important;
+    color: white !important;
+}
 
-    .stButton > button:disabled,
-    .stDownloadButton > button:disabled {
-        background-color: #d0c0d3 !important;
-        color: grey !important;
-        opacity: 0.5;
-        cursor: not-allowed !important;
-    }
+.stButton > button:disabled,
+.stDownloadButton > button:disabled {
+    background-color: #d0c0d3 !important;
+    color: grey !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
 
-    .stDownloadButton > button:disabled {
-        color: white !important;
-        opacity: 0.4 !important;
-    }
+.stDownloadButton > button:disabled {
+    color: white !important;
+    opacity: 0.4 !important;
+}
 
-    /* Labels and headings */
-    label, .css-1cpxqw2 {
-        color: white !important;
-        font-family: 'Montserrat', sans-serif !important;
-    }
+/* Labels and headings */
+label, .css-1cpxqw2 {
+    color: white !important;
+    font-family: 'Montserrat', sans-serif !important;
+}
 
-    /* Remove focus border glow from all inputs */
-    input:focus,
-    textarea:focus,
-    select:focus,
-    div[data-baseweb="select"]:focus {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-    </style>
+/* Remove focus glow */
+input:focus,
+textarea:focus,
+select:focus,
+div[data-baseweb="select"]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 # ---------------------------
@@ -246,18 +254,15 @@ if "rerun_after_generate" not in st.session_state:
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
-# widget keys (IMPORTANT: do NOT reuse keys you manually set in session_state)
+# widget keys
 SELECT_KEY = "selected_display_names_widget"
 CLIENT_KEY = "client_name_widget"
 DATE_KEY = "live_date_widget"
 
 # init widget defaults (safe before widgets instantiate)
-if SELECT_KEY not in st.session_state:
-    st.session_state[SELECT_KEY] = []
-if CLIENT_KEY not in st.session_state:
-    st.session_state[CLIENT_KEY] = ""
-if DATE_KEY not in st.session_state:
-    st.session_state[DATE_KEY] = ""
+st.session_state.setdefault(SELECT_KEY, [])
+st.session_state.setdefault(CLIENT_KEY, "")
+st.session_state.setdefault(DATE_KEY, "")
 
 # Paths
 TEMPLATE_DIR = "Templates"
@@ -287,7 +292,7 @@ artwork_files = st.file_uploader(
     key=f"artwork_uploader_{st.session_state['uploader_key']}"
 )
 
-# Artwork preview with filename (SAFE VERSION WITH LIMIT + AUTO-RESIZE)
+# Artwork preview (SAFE VERSION WITH LIMIT + AUTO-RESIZE)
 if artwork_files:
     os.makedirs("uploaded_artwork", exist_ok=True)
     cols = st.columns(4)
@@ -339,9 +344,10 @@ live_date = st.text_input("🗓️ Live Date (DDMMYY):", key=DATE_KEY)
 # ---------------------------
 # Buttons Row
 # ---------------------------
-st.markdown("""
-    <div style='display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;'>
-""", unsafe_allow_html=True)
+st.markdown(
+    "<div style='display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;'>",
+    unsafe_allow_html=True
+)
 
 col1, col2, col3 = st.columns([1, 1, 1], gap="large")
 
@@ -375,7 +381,6 @@ if reset_clicked:
     st.session_state["generation_errors"] = []
     st.session_state["rerun_after_generate"] = False
 
-    # reset widget values (SAFE because we control these widget keys)
     st.session_state[SELECT_KEY] = []
     st.session_state[CLIENT_KEY] = ""
     st.session_state[DATE_KEY] = ""
@@ -423,9 +428,6 @@ if generate_clicked:
         st.session_state["generation_errors"].append("Please enter client name and live date.")
     else:
         for selected_template in selected_templates:
-            if not selected_template.endswith(".png"):
-                selected_template += ".png"
-
             template_path = os.path.join(TEMPLATE_DIR, "Digital", selected_template)
 
             template_data = TEMPLATE_COORDINATES.get(selected_template)
@@ -448,17 +450,12 @@ if generate_clicked:
 
                     filename_no_ext = os.path.splitext(artwork_file.name)[0]
                     parts = filename_no_ext.split(" - ")
-
-                    if len(parts) >= 3:
-                        campaign_name = parts[1].strip()
-                    else:
-                        campaign_name = parts[-1].strip()
+                    campaign_name = parts[1].strip() if len(parts) >= 3 else parts[-1].strip()
 
                     final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
-
                     output_path = os.path.join(OUTPUT_DIR, final_filename)
-                    base, ext = os.path.splitext(output_path)
 
+                    base, ext = os.path.splitext(output_path)
                     counter = 1
                     temp_output_path = output_path
                     while os.path.exists(temp_output_path):
