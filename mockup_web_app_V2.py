@@ -233,6 +233,18 @@ if "zip_name" not in st.session_state:
 if "rerun_after_generate" not in st.session_state:
     st.session_state["rerun_after_generate"] = False
 
+# ✅ force-reset uploader by changing key
+if "uploader_key" not in st.session_state:
+    st.session_state["uploader_key"] = 0
+
+# ✅ persist input values so Reset can wipe them
+if "selected_display_names" not in st.session_state:
+    st.session_state["selected_display_names"] = []
+if "client_name" not in st.session_state:
+    st.session_state["client_name"] = ""
+if "live_date" not in st.session_state:
+    st.session_state["live_date"] = ""
+    
 # Paths
 TEMPLATE_DIR = "Templates"
 OUTPUT_DIR = "generated_mockups"
@@ -241,11 +253,20 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # Template Selection
 template_keys = list(TEMPLATE_COORDINATES.keys())
 template_display_names = [name.replace(".png", "") for name in template_keys]
-selected_display_names = st.multiselect("📍 Select Billboard(s):", template_display_names)
+selected_display_names = st.multiselect(
+    "📍 Select Billboard(s):",
+    template_display_names,
+    key="selected_display_names"
+)
 selected_templates = [name + ".png" for name in selected_display_names]
 
 # Artwork Upload
-artwork_files = st.file_uploader("🖼️ Upload Artwork File(s):", type=["jpg", "jpeg"], accept_multiple_files=True)
+artwork_files = st.file_uploader(
+    "🖼️ Upload Artwork File(s):",
+    type=["jpg", "jpeg"],
+    accept_multiple_files=True,
+    key=f"artwork_uploader_{st.session_state['uploader_key']}"
+)
 
 # Artwork preview with filename (SAFE VERSION WITH LIMIT + AUTO-RESIZE)
 if artwork_files:
@@ -298,15 +319,15 @@ if artwork_files:
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
 
 # Client & Date Input
-client_name = st.text_input("🔍 Client Name:")
-live_date = st.text_input("🗓️ Live Date (DDMMYY):")
+client_name = st.text_input("🔍 Client Name:", key="client_name")
+live_date = st.text_input("🗓️ Live Date (DDMMYY):", key="live_date")
 
 # --- Centered Row with Always-Visible Buttons ---
 st.markdown("""
     <div style='display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;'>
 """, unsafe_allow_html=True)
 
-col1, col2 = st.columns([1, 1], gap="large")
+col1, col2, col3 = st.columns([1, 1, 1], gap="large")
 
 with col1:
     generate_clicked = st.button("Generate", use_container_width=True)
@@ -324,7 +345,50 @@ with col2:
         key="download_button"
     )
 
+with col3:
+    reset_clicked = st.button("Reset All", use_container_width=True)
+
 st.markdown("</div>", unsafe_allow_html=True)
+
+if reset_clicked:
+    # clear outputs
+    st.session_state["generated_outputs"] = []
+    st.session_state["zip_bytes"] = None
+    st.session_state["zip_name"] = None
+    st.session_state["generation_errors"] = []
+    st.session_state["rerun_after_generate"] = False
+
+    # clear inputs
+    st.session_state["selected_display_names"] = []
+    st.session_state["client_name"] = ""
+    st.session_state["live_date"] = ""
+
+    # clear uploaded previews on disk (optional but keeps things clean)
+    try:
+        if os.path.isdir("uploaded_artwork"):
+            for f in os.listdir("uploaded_artwork"):
+                try:
+                    os.remove(os.path.join("uploaded_artwork", f))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # clear generated files on disk (keeps workspace clean)
+    try:
+        if os.path.isdir(OUTPUT_DIR):
+            for f in os.listdir(OUTPUT_DIR):
+                try:
+                    os.remove(os.path.join(OUTPUT_DIR, f))
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # force uploader to clear
+    st.session_state["uploader_key"] += 1
+
+    st.rerun()
 
 # Trigger generation logic
 if generate_clicked:
