@@ -22,11 +22,15 @@ st.image(
 )
 
 # ---------------------------
-# Style Block (FULL, CLEAN)
+# Style Block (CLEAN + FINAL, NUCLEAR)
 # ---------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+
+/* ---------------------------
+   GLOBAL
+--------------------------- */
 
 /* Background image (Streamlit-safe) */
 .stApp {
@@ -41,7 +45,7 @@ st.markdown("""
 /* Ensure nested containers don't paint over the background */
 html, body, .main, .stAppViewContainer {
     background-color: transparent !important;
-    color: white !important;
+    color: #FFFFFF !important;
     font-family: 'Montserrat', sans-serif !important;
     font-size: 18px !important;
     margin: 0 !important;
@@ -56,7 +60,9 @@ header, .st-emotion-cache-18ni7ap {
     padding-top: 2rem !important;
 }
 
-/* Generic input + Streamlit widgets */
+/* ---------------------------
+   INPUTS (GENERAL)
+--------------------------- */
 input, textarea, select,
 .stTextInput input,
 .stTextArea textarea,
@@ -64,48 +70,49 @@ input, textarea, select,
 .stMultiSelect > div,
 .stSelectbox > div {
     border-radius: 8px !important;
-    border: 1px solid white !important;
+    border: 1px solid #FFFFFF !important;
     box-shadow: none !important;
     background-color: #A27DA2 !important;
-    color: black !important;
+    color: #000000 !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Multiselect container */
+/* ---------------------------
+   MULTISELECT (BASEWEB)
+--------------------------- */
 div[data-baseweb="select"] {
     background-color: transparent !important;
     box-shadow: none !important;
 }
 
-/* Multiselect dropdown */
+/* Multiselect control */
 div[data-baseweb="select"] > div {
     background-color: #A27DA2 !important;
-    border: 1px solid white !important;
+    border: 1px solid #FFFFFF !important;
     border-radius: 8px !important;
-    color: white !important;
+    color: #FFFFFF !important;
 }
 
-/* Remove stroke line (border/outline) from combobox */
+/* Combobox (remove outline) */
 div[data-baseweb="select"] div[role="combobox"] {
-    color: white !important;
+    color: #FFFFFF !important;
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
 }
 
-/* "Choose options" + typed text -> WHITE */
+/* Typed text + placeholder -> WHITE */
 div[data-baseweb="select"] input {
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
 }
-
 div[data-baseweb="select"] input::placeholder {
     color: #FFFFFF !important;
     opacity: 1 !important;
     -webkit-text-fill-color: #FFFFFF !important;
 }
 
-/* "Choose options" sometimes rendered as spans */
+/* Sometimes "Choose options" is rendered as spans */
 div[data-baseweb="select"] div[role="combobox"] span,
 div[data-baseweb="select"] div[role="combobox"] div,
 div[data-baseweb="select"] div[role="combobox"] p {
@@ -121,126 +128,94 @@ span[data-baseweb="tag"] {
     border: 1px solid #542D54 !important;
     font-family: 'Montserrat', sans-serif !important;
 }
-
-/* Tag text */
 div[data-baseweb="tag"] span,
 span[data-baseweb="tag"] span {
     color: #FFFFFF !important;
 }
-
-/* Tag remove icon */
 div[data-baseweb="tag"] svg,
 span[data-baseweb="tag"] svg {
     fill: #FFFFFF !important;
     color: #FFFFFF !important;
 }
 
-/* File uploader container */
+/* =========================
+   FILE UPLOADER (FINAL / NUCLEAR)
+   Goal:
+   - Make ALL uploader text purple (#542D54)
+   - Ensure the Browse files label is readable (purple on white button)
+   - Cover Streamlit/BaseWeb variations across versions
+   ========================= */
+
+/* Uploader container */
 section[data-testid="stFileUploader"] {
     background-color: #A27DA2 !important;
-    border: 1px solid white !important;
+    border: 1px solid #FFFFFF !important;
     border-radius: 8px !important;
     box-shadow: none !important;
 }
 
-/* Uploaded file name text -> WHITE */
-section[data-testid="stFileUploader"] ul,
-section[data-testid="stFileUploader"] li,
-section[data-testid="stFileUploader"] li * {
-    color: #FFFFFF !important;
-    -webkit-text-fill-color: #FFFFFF !important;
+/* Force all descriptive text (drag/drop, limits, formats, filenames, etc.) -> purple */
+section[data-testid="stFileUploader"] :is(p, span, small, label, li, ul, div) {
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+    opacity: 1 !important;
 }
 
-section[data-testid="stFileUploader"] label > div {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-}
-
-section[data-testid="stFileUploader"] p {
-    text-align: left;
-}
-
-/* =========================
-   FILE UPLOADER BUTTON (FINAL)
-   Forces "Browse files" text to PURPLE on all Streamlit builds
-========================= */
-
-section[data-testid="stFileUploader"] button {
+/* The uploader "button" can be a <button> OR a BaseWeb div button */
+section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]) {
     background-color: #FFFFFF !important;
     border: 1px solid #542D54 !important;
+    border-radius: 8px !important;
     box-shadow: none !important;
-
-    /* this matters: label can be injected, so set it at the button itself */
-    color: #542D54 !important;
-    -webkit-text-fill-color: #542D54 !important;
+    opacity: 1 !important;
 }
 
-/* any nested text nodes */
-section[data-testid="stFileUploader"] button * {
+/* Force the Browse label text (and any nested spans) -> purple */
+section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]) * {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
+    opacity: 1 !important;
 }
 
-/* label is sometimes rendered via pseudo-elements in BaseWeb */
-section[data-testid="stFileUploader"] button::before,
-section[data-testid="stFileUploader"] button::after,
-section[data-testid="stFileUploader"] button span::before,
-section[data-testid="stFileUploader"] button span::after,
-section[data-testid="stFileUploader"] button div::before,
-section[data-testid="stFileUploader"] button div::after {
-    color: #542D54 !important;
-    -webkit-text-fill-color: #542D54 !important;
-}
-
-/* SVG icon inside the button */
-section[data-testid="stFileUploader"] button svg,
-section[data-testid="stFileUploader"] button svg * {
+/* Icons inside uploader (cloud icon, etc.) -> purple */
+section[data-testid="stFileUploader"] svg,
+section[data-testid="stFileUploader"] svg * {
     fill: #542D54 !important;
     color: #542D54 !important;
+    opacity: 1 !important;
 }
 
-/* hover / disabled */
-section[data-testid="stFileUploader"] button:hover {
+/* Hover */
+section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]):hover {
     background-color: #C8A7C9 !important;
     border-color: #542D54 !important;
 }
 
-section[data-testid="stFileUploader"] button:disabled {
-    background-color: #d0c0d3 !important;
+/* Disabled (keep readable) */
+section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]):disabled {
+    background-color: #FFFFFF !important;
     border-color: #542D54 !important;
     opacity: 0.6 !important;
     cursor: not-allowed !important;
 }
 
-section[data-testid="stFileUploader"] button:hover {
-    background-color: #C8A7C9 !important;
-    color: #542D54 !important;
-}
-
-section[data-testid="stFileUploader"] button:disabled {
-    background-color: #d0c0d3 !important;
-    color: #542D54 !important;
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-}
-
-/* Main buttons + download */
+/* ---------------------------
+   MAIN BUTTONS
+--------------------------- */
 .stButton > button,
 .stDownloadButton > button {
     display: block;
     margin: 0 auto;
     background-color: #A27DA2 !important;
-    color: white !important;
-    border: 1px solid white !important;
+    color: #FFFFFF !important;
+    border: 1px solid #FFFFFF !important;
     border-radius: 8px !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
 .stButton > button:hover {
     background-color: #C8A7C9 !important;
-    color: white !important;
+    color: #FFFFFF !important;
 }
 
 .stButton > button:disabled,
@@ -252,13 +227,13 @@ section[data-testid="stFileUploader"] button:disabled {
 }
 
 .stDownloadButton > button:disabled {
-    color: white !important;
+    color: #FFFFFF !important;
     opacity: 0.4 !important;
 }
 
 /* Labels and headings */
 label, .css-1cpxqw2 {
-    color: white !important;
+    color: #FFFFFF !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
@@ -278,13 +253,10 @@ div[data-baseweb="select"]:focus {
 # ---------------------------
 if "generated_outputs" not in st.session_state:
     st.session_state["generated_outputs"] = []
-
 if "zip_bytes" not in st.session_state:
     st.session_state["zip_bytes"] = None
-
 if "zip_name" not in st.session_state:
     st.session_state["zip_name"] = None
-
 if "rerun_after_generate" not in st.session_state:
     st.session_state["rerun_after_generate"] = False
 
