@@ -22,7 +22,9 @@ st.image(
 )
 
 # ---------------------------
-# Style Block (CLEAN + FINAL, NUCLEAR)
+# Style Block (CLEAN + FINAL)
+# Key fix: use Streamlit's actual uploader DOM testids (div[...] + Dropzone),
+# matching the PoP app that works.
 # ---------------------------
 st.markdown("""
 <style>
@@ -32,7 +34,6 @@ st.markdown("""
    GLOBAL
 --------------------------- */
 
-/* Background image (Streamlit-safe) */
 .stApp {
     background-color: #542D54 !important; /* fallback */
     background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine-V2/main/assets/MockUpMachine-BG.png") !important;
@@ -42,7 +43,6 @@ st.markdown("""
     background-attachment: fixed !important;
 }
 
-/* Ensure nested containers don't paint over the background */
 html, body, .main, .stAppViewContainer {
     background-color: transparent !important;
     color: #FFFFFF !important;
@@ -85,7 +85,6 @@ div[data-baseweb="select"] {
     box-shadow: none !important;
 }
 
-/* Multiselect control */
 div[data-baseweb="select"] > div {
     background-color: #A27DA2 !important;
     border: 1px solid #FFFFFF !important;
@@ -93,7 +92,6 @@ div[data-baseweb="select"] > div {
     color: #FFFFFF !important;
 }
 
-/* Combobox (remove outline) */
 div[data-baseweb="select"] div[role="combobox"] {
     color: #FFFFFF !important;
     outline: none !important;
@@ -101,7 +99,6 @@ div[data-baseweb="select"] div[role="combobox"] {
     box-shadow: none !important;
 }
 
-/* Typed text + placeholder -> WHITE */
 div[data-baseweb="select"] input {
     color: #FFFFFF !important;
     -webkit-text-fill-color: #FFFFFF !important;
@@ -112,14 +109,12 @@ div[data-baseweb="select"] input::placeholder {
     -webkit-text-fill-color: #FFFFFF !important;
 }
 
-/* Sometimes "Choose options" is rendered as spans */
 div[data-baseweb="select"] div[role="combobox"] span,
 div[data-baseweb="select"] div[role="combobox"] div,
 div[data-baseweb="select"] div[role="combobox"] p {
     color: #FFFFFF !important;
 }
 
-/* Selected tags/chips -> Gawk Purple */
 div[data-baseweb="tag"],
 span[data-baseweb="tag"] {
     background-color: #542D54 !important;
@@ -139,92 +134,66 @@ span[data-baseweb="tag"] svg {
 }
 
 /* =========================
-   FILE UPLOADER (FINAL / NUCLEAR)
-   Goal:
-   - Make ALL uploader text purple (#542D54)
-   - Ensure the Browse files label is readable (purple on white button)
-   - Cover Streamlit/BaseWeb variations across versions
+   FILE UPLOADER — FINAL FIX (PoP-style, stable)
    ========================= */
 
-/* Uploader container */
-section[data-testid="stFileUploader"] {
+/* Container */
+div[data-testid="stFileUploader"] {
     background-color: #A27DA2 !important;
     border: 1px solid #FFFFFF !important;
     border-radius: 8px !important;
     box-shadow: none !important;
 }
 
-/* Force all descriptive text (drag/drop, limits, formats, filenames, etc.) -> purple */
-section[data-testid="stFileUploader"] :is(p, span, small, label, li, ul, strong, em) {
+/* Optional: hide uploader label text */
+div[data-testid="stFileUploader"] label {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Dropzone text + icon -> purple */
+div[data-testid="stFileUploaderDropzone"] * {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
+    fill: #542D54 !important;
     opacity: 1 !important;
 }
 
-/* The uploader "button" can be a <button> OR a BaseWeb div button */
-section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]) {
-    background-color: #FFFFFF !important;
-    border: 1px solid #542D54 !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-    opacity: 1 !important;
-}
-
-/* Force the Browse label text (and any nested spans) -> purple */
-section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]) * {
-    color: #542D54 !important;
-    -webkit-text-fill-color: #542D54 !important;
-    opacity: 1 !important;
-}
-
-/* TARGET THE NATIVE FILE INPUT BUTTON (Chrome/Safari/Edge) */
-section[data-testid="stFileUploader"] input[type="file"] {
-  color: #542D54 !important;                 /* text like “No file chosen” (if shown) */
-  -webkit-text-fill-color: #542D54 !important;
-}
-
-/* Modern standard pseudo-element */
-section[data-testid="stFileUploader"] input[type="file"]::file-selector-button {
-  background: #FFFFFF !important;
-  color: #542D54 !important;
-  border: 1px solid #542D54 !important;
-  border-radius: 8px !important;
-  padding: 0.4rem 0.9rem !important;
-  font-family: 'Montserrat', sans-serif !important;
-  cursor: pointer !important;
-}
-
-/* WebKit fallback (older Safari/Chrome behaviour) */
-section[data-testid="stFileUploader"] input[type="file"]::-webkit-file-upload-button {
-  background: #FFFFFF !important;
-  color: #542D54 !important;
-  border: 1px solid #542D54 !important;
-  border-radius: 8px !important;
-  padding: 0.4rem 0.9rem !important;
-  font-family: 'Montserrat', sans-serif !important;
-  cursor: pointer !important;
-}
-
-/* Icons inside uploader (cloud icon, etc.) -> purple */
-section[data-testid="stFileUploader"] svg,
-section[data-testid="stFileUploader"] svg * {
+div[data-testid="stFileUploaderDropzone"] svg,
+div[data-testid="stFileUploaderDropzone"] svg * {
     fill: #542D54 !important;
     color: #542D54 !important;
     opacity: 1 !important;
 }
 
-/* Hover */
-section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]):hover {
-    background-color: #C8A7C9 !important;
-    border-color: #542D54 !important;
+/* Browse files button -> white background, purple text (including nested spans) */
+div[data-testid="stFileUploader"] button {
+    background-color: #FFFFFF !important;
+    border: 1px solid #542D54 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-weight: 700 !important;
 }
 
-/* Disabled (keep readable) */
-section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-baseweb="button"]):disabled {
-    background-color: #FFFFFF !important;
+div[data-testid="stFileUploader"] button,
+div[data-testid="stFileUploader"] button * {
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+    opacity: 1 !important;
+}
+
+/* Catch role-button variants if Streamlit swaps markup */
+div[data-testid="stFileUploader"] [role="button"],
+div[data-testid="stFileUploader"] [role="button"] * {
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+    opacity: 1 !important;
+}
+
+/* Hover */
+div[data-testid="stFileUploader"] button:hover {
+    background-color: #C8A7C9 !important;
     border-color: #542D54 !important;
-    opacity: 0.6 !important;
-    cursor: not-allowed !important;
 }
 
 /* ---------------------------
@@ -297,7 +266,6 @@ SELECT_KEY = "selected_display_names_widget"
 CLIENT_KEY = "client_name_widget"
 DATE_KEY = "live_date_widget"
 
-# init widget defaults (safe before widgets instantiate)
 st.session_state.setdefault(SELECT_KEY, [])
 st.session_state.setdefault(CLIENT_KEY, "")
 st.session_state.setdefault(DATE_KEY, "")
@@ -349,7 +317,6 @@ if artwork_files:
                     f"It will be automatically resized to stay under the safe limit "
                     f"({MAX_EDGE}px max edge / 50MP)."
                 )
-
                 scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
                 new_size = (int(width * scale_factor), int(height * scale_factor))
                 img = img.resize(new_size, Image.LANCZOS)
