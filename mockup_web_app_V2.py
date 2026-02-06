@@ -14,7 +14,10 @@ MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
 st.set_page_config(page_title="Mock Up Machine", layout="wide")
 
 # Header
-st.image("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png", use_container_width=True)
+st.image(
+    "https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png",
+    use_container_width=True
+)
 
 # Style Block
 st.markdown("""
@@ -22,12 +25,16 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 
     html, body, .main, .stApp, .stAppViewContainer {
-        background-color: #542D54 !important;
-        color: white !important;
-        font-family: 'Montserrat', sans-serif !important;
-        font-size: 18px !important;
-        margin: 0 !important;
-        padding: 0 !important;
+    background-color: #542D54; /* fallback */
+    background-image: url("/MockUpMachine-BG.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+
+    color: #FFFFFF;
+    margin: 0;
+    padding: 0;
     }
 
     header, .st-emotion-cache-18ni7ap {
@@ -220,6 +227,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ---------------------------
+# Session State Init
+# ---------------------------
 if "generated_outputs" not in st.session_state:
     st.session_state["generated_outputs"] = []
 
@@ -229,38 +239,47 @@ if "zip_bytes" not in st.session_state:
 if "zip_name" not in st.session_state:
     st.session_state["zip_name"] = None
 
-# ✅ one-click download: rerun once after generating
 if "rerun_after_generate" not in st.session_state:
     st.session_state["rerun_after_generate"] = False
 
-# ✅ force-reset uploader by changing key
+# force-reset uploader by changing key
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
-# ✅ persist input values so Reset can wipe them
-if "selected_display_names" not in st.session_state:
-    st.session_state["selected_display_names"] = []
-if "client_name" not in st.session_state:
-    st.session_state["client_name"] = ""
-if "live_date" not in st.session_state:
-    st.session_state["live_date"] = ""
-    
+# widget keys (IMPORTANT: do NOT reuse keys you manually set in session_state)
+SELECT_KEY = "selected_display_names_widget"
+CLIENT_KEY = "client_name_widget"
+DATE_KEY = "live_date_widget"
+
+# init widget defaults (safe before widgets instantiate)
+if SELECT_KEY not in st.session_state:
+    st.session_state[SELECT_KEY] = []
+if CLIENT_KEY not in st.session_state:
+    st.session_state[CLIENT_KEY] = ""
+if DATE_KEY not in st.session_state:
+    st.session_state[DATE_KEY] = ""
+
 # Paths
 TEMPLATE_DIR = "Templates"
 OUTPUT_DIR = "generated_mockups"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# ---------------------------
 # Template Selection
+# ---------------------------
 template_keys = list(TEMPLATE_COORDINATES.keys())
 template_display_names = [name.replace(".png", "") for name in template_keys]
+
 selected_display_names = st.multiselect(
     "📍 Select Billboard(s):",
     template_display_names,
-    key="selected_display_names"
+    key=SELECT_KEY
 )
 selected_templates = [name + ".png" for name in selected_display_names]
 
+# ---------------------------
 # Artwork Upload
+# ---------------------------
 artwork_files = st.file_uploader(
     "🖼️ Upload Artwork File(s):",
     type=["jpg", "jpeg"],
@@ -271,19 +290,16 @@ artwork_files = st.file_uploader(
 # Artwork preview with filename (SAFE VERSION WITH LIMIT + AUTO-RESIZE)
 if artwork_files:
     os.makedirs("uploaded_artwork", exist_ok=True)
-
-    cols = st.columns(4)  # Up to 4 previews per row
+    cols = st.columns(4)
 
     for idx, file in enumerate(artwork_files):
         artwork_path = os.path.join("uploaded_artwork", file.name)
 
         try:
-            # Load uploaded file into Pillow
             img = Image.open(file)
             width, height = img.size
             total_pixels = width * height
 
-            # Check if image exceeds safe limits
             if total_pixels > MAX_PIXELS or max(width, height) > MAX_EDGE:
                 st.warning(
                     f"⚠️ {file.name} is very large ({width}×{height}). "
@@ -291,15 +307,12 @@ if artwork_files:
                     f"({MAX_EDGE}px max edge / 50MP)."
                 )
 
-                # Auto-resize proportionally
                 scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
                 new_size = (int(width * scale_factor), int(height * scale_factor))
                 img = img.resize(new_size, Image.LANCZOS)
 
-            # Save processed or original image
             img.save(artwork_path, "JPEG", quality=95)
 
-            # --- Final safety check (image MUST be safe at this point) ---
             img_check = Image.open(artwork_path)
             w, h = img_check.size
             if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
@@ -313,16 +326,19 @@ if artwork_files:
             st.error(f"❌ Error processing {file.name}: {e}")
             continue
 
-        # Display preview
         with cols[idx % 4]:
             st.image(artwork_path, caption=file.name, use_container_width=True)
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
 
+# ---------------------------
 # Client & Date Input
-client_name = st.text_input("🔍 Client Name:", key="client_name")
-live_date = st.text_input("🗓️ Live Date (DDMMYY):", key="live_date")
+# ---------------------------
+client_name = st.text_input("🔍 Client Name:", key=CLIENT_KEY)
+live_date = st.text_input("🗓️ Live Date (DDMMYY):", key=DATE_KEY)
 
-# --- Centered Row with Always-Visible Buttons ---
+# ---------------------------
+# Buttons Row
+# ---------------------------
 st.markdown("""
     <div style='display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;'>
 """, unsafe_allow_html=True)
@@ -334,7 +350,6 @@ with col1:
 
 with col2:
     is_ready = st.session_state["zip_bytes"] is not None
-
     st.download_button(
         label="Download Mock Ups",
         data=st.session_state["zip_bytes"] if is_ready else b"",
@@ -350,20 +365,22 @@ with col3:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
+# ---------------------------
+# Reset Logic (NO Streamlit key conflicts)
+# ---------------------------
 if reset_clicked:
-    # clear outputs
     st.session_state["generated_outputs"] = []
     st.session_state["zip_bytes"] = None
     st.session_state["zip_name"] = None
     st.session_state["generation_errors"] = []
     st.session_state["rerun_after_generate"] = False
 
-    # clear inputs
-    st.session_state["selected_display_names"] = []
-    st.session_state["client_name"] = ""
-    st.session_state["live_date"] = ""
+    # reset widget values (SAFE because we control these widget keys)
+    st.session_state[SELECT_KEY] = []
+    st.session_state[CLIENT_KEY] = ""
+    st.session_state[DATE_KEY] = ""
 
-    # clear uploaded previews on disk (optional but keeps things clean)
+    # clear uploaded previews on disk
     try:
         if os.path.isdir("uploaded_artwork"):
             for f in os.listdir("uploaded_artwork"):
@@ -374,7 +391,7 @@ if reset_clicked:
     except Exception:
         pass
 
-    # clear generated files on disk (keeps workspace clean)
+    # clear generated files on disk
     try:
         if os.path.isdir(OUTPUT_DIR):
             for f in os.listdir(OUTPUT_DIR):
@@ -387,10 +404,11 @@ if reset_clicked:
 
     # force uploader to clear
     st.session_state["uploader_key"] += 1
-
     st.rerun()
 
-# Trigger generation logic
+# ---------------------------
+# Generation Logic
+# ---------------------------
 if generate_clicked:
     st.session_state["generated_outputs"] = []
     st.session_state["generation_errors"] = []
@@ -423,7 +441,6 @@ if generate_clicked:
                 try:
                     artwork_path = os.path.join("uploaded_artwork", artwork_file.name)
 
-                    # If preview step didn't write it for some reason, write it now
                     if not os.path.exists(artwork_path):
                         os.makedirs("uploaded_artwork", exist_ok=True)
                         with open(artwork_path, "wb") as f:
@@ -463,7 +480,7 @@ if generate_clicked:
                         f"❌ Error generating mockup for {selected_template}: {e}"
                     )
 
-        # ✅ Build ZIP bytes immediately so Download activates on the same click
+        # Build ZIP bytes immediately so Download activates on same click
         if st.session_state["generated_outputs"]:
             import io
 
@@ -479,16 +496,15 @@ if generate_clicked:
             st.session_state["zip_bytes"] = buffer.getvalue()
             st.session_state["zip_name"] = zip_name
 
-            # ✅ Force immediate rerun so the Download button sees zip_bytes right away
             st.session_state["rerun_after_generate"] = True
             st.rerun()
 
-# ✅ Display thumbnails in a 4-column layout (lower memory)
+# ---------------------------
+# Thumbnails + Summary
+# ---------------------------
 if st.session_state["generated_outputs"]:
-    from PIL import Image
-
     cols = st.columns(4)
-    for i, (filename, path) in enumerate(st.session_state.generated_outputs):
+    for i, (filename, path) in enumerate(st.session_state["generated_outputs"]):
         with cols[i % 4]:
             if os.path.exists(path):
                 try:
@@ -500,16 +516,14 @@ if st.session_state["generated_outputs"]:
             else:
                 st.warning(f"⚠️ Missing file: {filename}")
 
-# Summary feedback
-    successful = [f for f, p in st.session_state.generated_outputs if os.path.exists(p)]
-    missing = [f for f, p in st.session_state.generated_outputs if not os.path.exists(p)]
+    successful = [f for f, p in st.session_state["generated_outputs"] if os.path.exists(p)]
+    missing = [f for f, p in st.session_state["generated_outputs"] if not os.path.exists(p)]
 
     if successful:
         st.success(f"✅ {len(successful)} mockup(s) generated successfully.")
     if missing:
         st.warning(f"⚠️ {len(missing)} mockup(s) missing or failed to load.")
-        
-# Display error messages after generation
+
 if "generation_errors" in st.session_state:
     for error in st.session_state["generation_errors"]:
         st.error(error)
