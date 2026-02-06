@@ -13,7 +13,11 @@ MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
 # ---------------------------
 # UI Config
 # ---------------------------
-st.set_page_config(page_title="Mock Up Machine", layout="wide")
+st.set_page_config(
+    page_title="Mock Up Machine",
+    layout="wide",
+    page_icon="assets/favicon.png",
+)
 
 # Header
 st.image(
