@@ -162,18 +162,27 @@ section[data-testid="stFileUploader"] p {
     text-align: left;
 }
 
-/* Browse button text + icon -> GREY */
+/* Browse files button text + icon -> PURPLE */
 section[data-testid="stFileUploader"] button,
+section[data-testid="stFileUploader"] button * ,
 section[data-testid="stFileUploader"] button span,
-section[data-testid="stFileUploader"] button * {
-    color: #6B6B6B !important;
-    -webkit-text-fill-color: #6B6B6B !important;
+section[data-testid="stFileUploader"] button div,
+section[data-testid="stFileUploader"] button p {
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
 }
 
+/* SVG icon inside the button */
 section[data-testid="stFileUploader"] button svg,
 section[data-testid="stFileUploader"] button svg * {
-    fill: #6B6B6B !important;
-    color: #6B6B6B !important;
+    fill: #542D54 !important;
+    color: #542D54 !important;
+}
+
+/* Keep button readable */
+section[data-testid="stFileUploader"] button {
+    background-color: #FFFFFF !important;
+    border: 1px solid #542D54 !important;
 }
 
 section[data-testid="stFileUploader"] button:hover {
