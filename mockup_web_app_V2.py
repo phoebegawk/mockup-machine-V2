@@ -155,7 +155,7 @@ section[data-testid="stFileUploader"] {
 }
 
 /* Force all descriptive text (drag/drop, limits, formats, filenames, etc.) -> purple */
-section[data-testid="stFileUploader"] :is(p, span, small, label, li, ul, div) {
+section[data-testid="stFileUploader"] :is(p, span, small, label, li, ul, strong, em) {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
     opacity: 1 !important;
@@ -175,6 +175,34 @@ section[data-testid="stFileUploader"] :is(button, [role="button"], div[data-base
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
     opacity: 1 !important;
+}
+
+/* TARGET THE NATIVE FILE INPUT BUTTON (Chrome/Safari/Edge) */
+section[data-testid="stFileUploader"] input[type="file"] {
+  color: #542D54 !important;                 /* text like “No file chosen” (if shown) */
+  -webkit-text-fill-color: #542D54 !important;
+}
+
+/* Modern standard pseudo-element */
+section[data-testid="stFileUploader"] input[type="file"]::file-selector-button {
+  background: #FFFFFF !important;
+  color: #542D54 !important;
+  border: 1px solid #542D54 !important;
+  border-radius: 8px !important;
+  padding: 0.4rem 0.9rem !important;
+  font-family: 'Montserrat', sans-serif !important;
+  cursor: pointer !important;
+}
+
+/* WebKit fallback (older Safari/Chrome behaviour) */
+section[data-testid="stFileUploader"] input[type="file"]::-webkit-file-upload-button {
+  background: #FFFFFF !important;
+  color: #542D54 !important;
+  border: 1px solid #542D54 !important;
+  border-radius: 8px !important;
+  padding: 0.4rem 0.9rem !important;
+  font-family: 'Montserrat', sans-serif !important;
+  cursor: pointer !important;
 }
 
 /* Icons inside uploader (cloud icon, etc.) -> purple */
