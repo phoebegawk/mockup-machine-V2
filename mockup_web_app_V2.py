@@ -162,12 +162,34 @@ section[data-testid="stFileUploader"] p {
     text-align: left;
 }
 
-/* Browse files button text + icon -> PURPLE */
-section[data-testid="stFileUploader"] button,
-section[data-testid="stFileUploader"] button * ,
-section[data-testid="stFileUploader"] button span,
-section[data-testid="stFileUploader"] button div,
-section[data-testid="stFileUploader"] button p {
+/* =========================
+   FILE UPLOADER BUTTON (FINAL)
+   Forces "Browse files" text to PURPLE on all Streamlit builds
+========================= */
+
+section[data-testid="stFileUploader"] button {
+    background-color: #FFFFFF !important;
+    border: 1px solid #542D54 !important;
+    box-shadow: none !important;
+
+    /* this matters: label can be injected, so set it at the button itself */
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+}
+
+/* any nested text nodes */
+section[data-testid="stFileUploader"] button * {
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+}
+
+/* label is sometimes rendered via pseudo-elements in BaseWeb */
+section[data-testid="stFileUploader"] button::before,
+section[data-testid="stFileUploader"] button::after,
+section[data-testid="stFileUploader"] button span::before,
+section[data-testid="stFileUploader"] button span::after,
+section[data-testid="stFileUploader"] button div::before,
+section[data-testid="stFileUploader"] button div::after {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
 }
@@ -179,10 +201,17 @@ section[data-testid="stFileUploader"] button svg * {
     color: #542D54 !important;
 }
 
-/* Keep button readable */
-section[data-testid="stFileUploader"] button {
-    background-color: #FFFFFF !important;
-    border: 1px solid #542D54 !important;
+/* hover / disabled */
+section[data-testid="stFileUploader"] button:hover {
+    background-color: #C8A7C9 !important;
+    border-color: #542D54 !important;
+}
+
+section[data-testid="stFileUploader"] button:disabled {
+    background-color: #d0c0d3 !important;
+    border-color: #542D54 !important;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
 }
 
 section[data-testid="stFileUploader"] button:hover {
