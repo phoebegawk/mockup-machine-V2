@@ -665,4 +665,3 @@ TEMPLATE_COORDINATES = {
         ]
     },
 }
-}
