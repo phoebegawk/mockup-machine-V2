@@ -400,15 +400,6 @@ TEMPLATE_COORDINATES = {
             (1018, 610)
         ]
     },
-    "Singleton (Digital) - 23301-D.png": {
-        "split_ratio": [1.0],
-        "LHS": [
-            (1139, 546),
-            (1503, 570),
-            (1504, 691),
-            (1139, 683)
-        ]
-    },
     "Port Augusta (Digital) - 57002-D.png": {
         "split_ratio": [1.0],
         "LHS": [
