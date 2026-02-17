@@ -1,6 +1,6 @@
 import os
 import zipfile
-from PIL import Image
+from PIL import Image, ImageOps
 import streamlit as st
 
 from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
@@ -306,46 +306,47 @@ artwork_files = st.file_uploader(
     key=f"artwork_uploader_{st.session_state['uploader_key']}"
 )
 
-# Artwork preview (SAFE VERSION WITH LIMIT + AUTO-RESIZE)
+# Artwork preview (NO recompression unless resize is required)
 if artwork_files:
     os.makedirs("uploaded_artwork", exist_ok=True)
     cols = st.columns(4)
 
     for idx, file in enumerate(artwork_files):
+        # Default: save original bytes as-is (no recompress)
         artwork_path = os.path.join("uploaded_artwork", file.name)
 
         try:
             img = Image.open(file)
+            img = ImageOps.exif_transpose(img)  # fixes rotation issues
             width, height = img.size
             total_pixels = width * height
 
-            if total_pixels > MAX_PIXELS or max(width, height) > MAX_EDGE:
+            needs_resize = (total_pixels > MAX_PIXELS) or (max(width, height) > MAX_EDGE)
+
+            if needs_resize:
                 st.warning(
                     f"⚠️ {file.name} is very large ({width}×{height}). "
-                    f"It will be automatically resized to stay under the safe limit "
-                    f"({MAX_EDGE}px max edge / 50MP)."
+                    f"It will be resized to stay under safe limits, stored LOSSLESS."
                 )
                 scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
                 new_size = (int(width * scale_factor), int(height * scale_factor))
                 img = img.resize(new_size, Image.LANCZOS)
 
-            img.save(artwork_path, "JPEG", quality=95)
-
-            img_check = Image.open(artwork_path)
-            w, h = img_check.size
-            if (w * h) > MAX_PIXELS or max(w, h) > MAX_EDGE:
-                st.error(
-                    f"❌ {file.name} still exceeds safe size after resizing: {w}×{h}. "
-                    "This file may be corrupted or unsupported."
-                )
-                continue
+                # Save resized as PNG (lossless) so warp starts from clean data
+                base_name, _ = os.path.splitext(file.name)
+                artwork_path = os.path.join("uploaded_artwork", f"{base_name}.png")
+                img.convert("RGBA").save(artwork_path, "PNG", optimize=True)
+            else:
+                # Save original upload bytes AS-IS (no extra JPEG pass)
+                with open(artwork_path, "wb") as f:
+                    f.write(file.getbuffer())
 
         except Exception as e:
             st.error(f"❌ Error processing {file.name}: {e}")
             continue
 
         with cols[idx % 4]:
-            st.image(artwork_path, caption=file.name, use_container_width=True)
+            st.image(artwork_path, caption=os.path.basename(artwork_path), use_container_width=True)
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
 
 # ---------------------------
@@ -453,12 +454,16 @@ if generate_clicked:
 
             for artwork_file in artwork_files:
                 try:
-                    artwork_path = os.path.join("uploaded_artwork", artwork_file.name)
+                    base_name, _ = os.path.splitext(artwork_file.name)
+                    png_path = os.path.join("uploaded_artwork", f"{base_name}.png")
+                    jpg_path = os.path.join("uploaded_artwork", artwork_file.name)
+                    artwork_path = png_path if os.path.exists(png_path) else jpg_path
 
                     if not os.path.exists(artwork_path):
                         os.makedirs("uploaded_artwork", exist_ok=True)
-                        with open(artwork_path, "wb") as f:
+                        with open(jpg_path, "wb") as f:
                             f.write(artwork_file.getbuffer())
+                        artwork_path = jpg_path
 
                     filename_no_ext = os.path.splitext(artwork_file.name)[0]
                     parts = filename_no_ext.split(" - ")
