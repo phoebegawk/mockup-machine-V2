@@ -27,8 +27,6 @@ st.image(
 
 # ---------------------------
 # Style Block (CLEAN + FINAL)
-# Key fix: use Streamlit's actual uploader DOM testids (div[...] + Dropzone),
-# matching the PoP app that works.
 # ---------------------------
 st.markdown("""
 <style>
@@ -265,14 +263,20 @@ if "rerun_after_generate" not in st.session_state:
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
-# widget keys
-SELECT_KEY = "selected_display_names_widget"
-CLIENT_KEY = "client_name_widget"
-DATE_KEY = "live_date_widget"
+# force-reset widgets by changing key (multiselect + text inputs)
+if "reset_nonce" not in st.session_state:
+    st.session_state["reset_nonce"] = 0
 
-st.session_state.setdefault(SELECT_KEY, [])
-st.session_state.setdefault(CLIENT_KEY, "")
-st.session_state.setdefault(DATE_KEY, "")
+# widget key bases
+SELECT_KEY_BASE = "selected_display_names_widget"
+CLIENT_KEY_BASE = "client_name_widget"
+DATE_KEY_BASE = "live_date_widget"
+
+# current widget keys (nonce-based)
+nonce = st.session_state["reset_nonce"]
+SELECT_KEY = f"{SELECT_KEY_BASE}_{nonce}"
+CLIENT_KEY = f"{CLIENT_KEY_BASE}_{nonce}"
+DATE_KEY = f"{DATE_KEY_BASE}_{nonce}"
 
 # Paths
 TEMPLATE_DIR = "Templates"
@@ -384,15 +388,12 @@ st.markdown("</div>", unsafe_allow_html=True)
 # Reset Logic (NO Streamlit key conflicts)
 # ---------------------------
 if reset_clicked:
+    # clear outputs/state (safe)
     st.session_state["generated_outputs"] = []
     st.session_state["zip_bytes"] = None
     st.session_state["zip_name"] = None
     st.session_state["generation_errors"] = []
     st.session_state["rerun_after_generate"] = False
-
-    st.session_state[SELECT_KEY] = []
-    st.session_state[CLIENT_KEY] = ""
-    st.session_state[DATE_KEY] = ""
 
     # clear uploaded previews on disk
     try:
@@ -416,8 +417,10 @@ if reset_clicked:
     except Exception:
         pass
 
-    # force uploader to clear
+    # IMPORTANT: reset widgets by changing keys (no direct widget-state writes)
     st.session_state["uploader_key"] += 1
+    st.session_state["reset_nonce"] += 1
+
     st.rerun()
 
 # ---------------------------
