@@ -1,6 +1,8 @@
 from PIL import Image
 import numpy as np
 import cv2
+import gc
+
 
 def generate_filename(template_name, client_name, campaign_name, live_date):
     site = template_name.replace(".png", "")
@@ -9,7 +11,7 @@ def generate_filename(template_name, client_name, campaign_name, live_date):
 
 def warp_panel(image, src_points, dst_points, size):
     matrix = cv2.getPerspectiveTransform(np.float32(src_points), np.float32(dst_points))
-    return cv2.warpPerspective(
+    warped = cv2.warpPerspective(
         image,
         matrix,
         size,
@@ -17,6 +19,8 @@ def warp_panel(image, src_points, dst_points, size):
         borderMode=cv2.BORDER_CONSTANT,
         borderValue=(0, 0, 0, 0),
     )
+    del matrix
+    return warped
 
 
 def generate_mockup(template_path, artwork_path, output_path, coords):
@@ -27,17 +31,31 @@ def generate_mockup(template_path, artwork_path, output_path, coords):
       - artwork under template
       - saved as JPEG
     """
-    try:
-        template = Image.open(template_path).convert("RGBA")
-        artwork = Image.open(artwork_path).convert("RGBA")
+    template = None
+    artwork = None
+    warped_img = None
+    base = None
+    rgb = None
+    artwork_np = None
+    warped = None
 
+    try:
         if not isinstance(coords, (list, tuple)) or len(coords) != 4:
             raise ValueError("Template coordinates must contain exactly 4 points.")
 
-        artwork_np = np.array(artwork)  # RGBA
-        src = [(0, 0), (artwork.width, 0), (artwork.width, artwork.height), (0, artwork.height)]
+        with Image.open(template_path) as template_src, Image.open(artwork_path) as artwork_src:
+            template = template_src.convert("RGBA")
+            artwork = artwork_src.convert("RGBA")
+
+        src = [
+            (0, 0),
+            (artwork.width, 0),
+            (artwork.width, artwork.height),
+            (0, artwork.height),
+        ]
         dst = coords
 
+        artwork_np = np.array(artwork, dtype=np.uint8)
         warped = warp_panel(artwork_np, src, dst, template.size)
         warped_img = Image.fromarray(warped, mode="RGBA")
 
@@ -49,11 +67,26 @@ def generate_mockup(template_path, artwork_path, output_path, coords):
         try:
             rgb.save(output_path, "JPEG", quality=98, subsampling=0, optimize=True)
         except TypeError:
-            # Some Pillow builds don't accept subsampling kwarg
             rgb.save(output_path, "JPEG", quality=98, optimize=True)
 
     except Exception as e:
         raise RuntimeError(f"Error generating mockup: {e}")
+
+    finally:
+        if rgb is not None:
+            rgb.close()
+        if base is not None:
+            base.close()
+        if warped_img is not None:
+            warped_img.close()
+        if artwork is not None:
+            artwork.close()
+        if template is not None:
+            template.close()
+
+        del artwork_np
+        del warped
+        gc.collect()
 
 
 def split_artwork_by_ratios(artwork_img, ratios):
@@ -83,9 +116,16 @@ def split_artwork_by_ratios(artwork_img, ratios):
 
 
 def generate_multi_panel_mockup(template_path, artwork_path, output_path, coords):
+    template = None
+    artwork = None
+    base = None
+    rgb = None
+    artwork_pieces = []
+
     try:
-        template = Image.open(template_path).convert("RGBA")
-        artwork = Image.open(artwork_path).convert("RGBA")
+        with Image.open(template_path) as template_src, Image.open(artwork_path) as artwork_src:
+            template = template_src.convert("RGBA")
+            artwork = artwork_src.convert("RGBA")
 
         split_ratios = coords.get("split_ratios")
         if not split_ratios:
@@ -106,12 +146,30 @@ def generate_multi_panel_mockup(template_path, artwork_path, output_path, coords
         base = Image.new("RGBA", template.size, (0, 0, 0, 0))
 
         for piece, key in zip(artwork_pieces, panels):
-            dst = coords[key]
-            src = [(0, 0), (piece.width, 0), (piece.width, piece.height), (0, piece.height)]
-            piece_np = np.array(piece)
-            warped = warp_panel(piece_np, src, dst, template.size)
-            warped_img = Image.fromarray(warped, mode="RGBA")
-            base.paste(warped_img, (0, 0), warped_img)
+            warped = None
+            piece_np = None
+            warped_img = None
+
+            try:
+                dst = coords[key]
+                src = [
+                    (0, 0),
+                    (piece.width, 0),
+                    (piece.width, piece.height),
+                    (0, piece.height),
+                ]
+
+                piece_np = np.array(piece, dtype=np.uint8)
+                warped = warp_panel(piece_np, src, dst, template.size)
+                warped_img = Image.fromarray(warped, mode="RGBA")
+                base.paste(warped_img, (0, 0), warped_img)
+
+            finally:
+                if warped_img is not None:
+                    warped_img.close()
+                del piece_np
+                del warped
+                gc.collect()
 
         base.paste(template, (0, 0), template)
 
@@ -123,3 +181,22 @@ def generate_multi_panel_mockup(template_path, artwork_path, output_path, coords
 
     except Exception as e:
         raise RuntimeError(f"Error generating multi-panel mockup: {e}")
+
+    finally:
+        if rgb is not None:
+            rgb.close()
+        if base is not None:
+            base.close()
+
+        for piece in artwork_pieces:
+            try:
+                piece.close()
+            except Exception:
+                pass
+
+        if artwork is not None:
+            artwork.close()
+        if template is not None:
+            template.close()
+
+        gc.collect()
