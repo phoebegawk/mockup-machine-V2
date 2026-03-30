@@ -68,16 +68,17 @@ def file_size_mb(path: Path) -> float:
 def prepare_artwork_file(uploaded_file, target_dir: Path):
     """
     Saves the uploaded artwork to disk while preserving current logic:
-    - Original JPEG bytes are kept as-is unless resize is required.
+    - Original JPG/JPEG/PNG bytes are kept as-is unless resize is required.
     - Oversized files are resized and stored losslessly as PNG.
     Returns metadata for downstream use.
     """
     target_dir.mkdir(parents=True, exist_ok=True)
 
     original_name = Path(uploaded_file.name).name
-    base_name, _ = os.path.splitext(original_name)
-    jpg_path = target_dir / original_name
-    png_path = target_dir / f"{base_name}.png"
+    base_name = Path(original_name).stem
+    original_ext = Path(original_name).suffix.lower()
+    original_path = target_dir / original_name
+    png_resized_path = target_dir / f"{base_name}.png"
 
     try:
         uploaded_file.seek(0)
@@ -95,27 +96,28 @@ def prepare_artwork_file(uploaded_file, target_dir: Path):
             new_size = (max(1, int(width * scale_factor)), max(1, int(height * scale_factor)))
             resized = img.resize(new_size, Image.LANCZOS)
             try:
-                resized.convert("RGBA").save(png_path, "PNG", optimize=True)
+                resized.convert("RGBA").save(png_resized_path, "PNG", optimize=True)
             finally:
                 resized.close()
-            saved_path = png_path
+            saved_path = png_resized_path
         else:
             try:
                 uploaded_file.seek(0)
             except Exception:
                 pass
-            with open(jpg_path, "wb") as f:
+            with open(original_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            saved_path = jpg_path
+            saved_path = original_path
 
     gc.collect()
 
     return {
         "original_name": original_name,
         "base_name": base_name,
+        "original_ext": original_ext,
         "saved_path": saved_path,
-        "jpg_path": jpg_path,
-        "png_path": png_path,
+        "original_path": original_path,
+        "png_resized_path": png_resized_path,
         "width": width,
         "height": height,
         "total_pixels": total_pixels,
@@ -406,7 +408,7 @@ selected_templates = [name + ".png" for name in selected_display_names]
 # ---------------------------
 artwork_files = st.file_uploader(
     "🖼️ Upload Artwork File(s):",
-    type=["jpg", "jpeg"],
+    type=["jpg", "jpeg", "png"],
     accept_multiple_files=True,
     key=f"artwork_uploader_{st.session_state['uploader_key']}",
 )
