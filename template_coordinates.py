@@ -106,6 +106,15 @@ TEMPLATE_COORDINATES = {
             (1274, 641),
         ]
     },
+    "Bendigo Kangaroo Flat (Digital) - 35555-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (497, 317),
+            (891, 317),
+            (891, 436),
+            (497, 436),
+        ]
+    },
     "Bendigo (Digital) - 35502-D.png": {
         "split_ratio": [1.0],
         "LHS": [
