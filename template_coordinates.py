@@ -346,6 +346,15 @@ TEMPLATE_COORDINATES = {
             (1147, 1083)
         ]
     },
+    "Moss Vale (Digital) - 25771-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (577, 368),
+            (829, 376),
+            (829, 458),
+            (577, 452),
+        ]
+    },
     "Mount Barker (Digital) - 52511-D.png": {
         "split_ratio": [1.0],
         "LHS": [
