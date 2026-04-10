@@ -427,6 +427,15 @@ TEMPLATE_COORDINATES = {
             (391, 850)
         ]
     },
+    "Port Macquarie (Digital) - 24442-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (695, 387),
+            (1051, 385),
+            (1051, 484),
+            (695, 487),
+        ]
+    },
     "Rosebud (Digital) - 39391-D.png": {
         "split_ratio": [1.0],
         "LHS": [
