@@ -172,7 +172,7 @@ st.markdown("""
 
 .stApp {
     background-color: #542D54 !important;
-    background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine-V2/main/assets/MockUpMachine-BG.png") !important;
+    background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/assets/MockUpMachine-BG.png") !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: center center !important;
