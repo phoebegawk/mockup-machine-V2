@@ -158,10 +158,12 @@ st.set_page_config(
 )
 
 # Header
-st.image(
-    "https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png",
-    width="stretch",
-)
+HEADER_PATH = BASE_DIR / "assets" / "Header-MockUpMachine.png"
+
+if HEADER_PATH.exists():
+    st.image(str(HEADER_PATH), use_container_width=True)
+else:
+    st.warning(f"Header image not found: {HEADER_PATH}")
 
 # ---------------------------
 # Style Block (CLEAN + FINAL)
