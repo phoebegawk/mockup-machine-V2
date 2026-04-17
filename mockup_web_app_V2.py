@@ -170,8 +170,11 @@ else:
 # ---------------------------
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
+/* -----------------------------------
+   GLOBAL PAGE (background untouched)
+----------------------------------- */
 .stApp {
     background-color: #542D54 !important;
     background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/assets/MockUpMachine-BG.png") !important;
@@ -185,68 +188,142 @@ html, body, .main, .stAppViewContainer {
     background-color: transparent !important;
     color: #FFFFFF !important;
     font-family: 'Montserrat', sans-serif !important;
-    font-size: 18px !important;
+    font-size: 16px !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
+* {
+    font-family: 'Montserrat', sans-serif !important;
+    box-sizing: border-box;
+}
+
 header, .st-emotion-cache-18ni7ap {
-    background-color: #542D54 !important;
+    background-color: transparent !important;
 }
 
 .block-container {
     padding-top: 2rem !important;
+    max-width: 1200px !important;
 }
 
-input, textarea, select,
-.stTextInput input,
-.stTextArea textarea,
-.stDateInput input,
-.stMultiSelect > div,
-.stSelectbox > div {
-    border-radius: 8px !important;
-    border: 1px solid #FFFFFF !important;
-    box-shadow: none !important;
-    background-color: #A27DA2 !important;
-    color: #000000 !important;
+/* -----------------------------------
+   WHITE CARD WRAPPER
+   Apply white-card-with-yellow-border styling
+   to Streamlit's top-level vertical block groups
+   so form controls sit inside panels like Check My Specs.
+----------------------------------- */
+section.main .block-container > div[data-testid="stVerticalBlock"] {
+    background: #FFFFFF !important;
+    border-radius: 12px !important;
+    border: 3px solid #D7DF23 !important;
+    padding: 20px 32px !important;
+    margin-bottom: 24px !important;
+    color: #542D54 !important;
+}
+
+/* Revert the card treatment on nested vertical blocks so we don't
+   end up with nested white cards inside the outer card. */
+section.main .block-container
+    div[data-testid="stVerticalBlock"]
+    div[data-testid="stVerticalBlock"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Horizontal blocks (st.columns) should stay transparent */
+div[data-testid="stHorizontalBlock"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Header image stays full-width above the cards (no card wrapper) */
+section.main .block-container > div[data-testid="stVerticalBlock"]:has(> div[data-testid="stImage"]:first-child:last-child) {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-bottom: 16px !important;
+}
+
+/* -----------------------------------
+   LABELS (inside white cards = purple)
+----------------------------------- */
+label,
+.stTextInput label,
+.stMultiSelect label,
+.stFileUploader label,
+.stDateInput label,
+div[data-testid="stWidgetLabel"],
+div[data-testid="stWidgetLabel"] p {
+    color: #542D54 !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
+/* -----------------------------------
+   TEXT INPUTS
+----------------------------------- */
+.stTextInput input,
+.stTextArea textarea,
+.stDateInput input {
+    background-color: #FFFFFF !important;
+    color: #542D54 !important;
+    border-radius: 8px !important;
+    border: 2px solid #D7DF23 !important;
+    box-shadow: none !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 10px 14px !important;
+}
+
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #542D54 !important;
+    opacity: 0.6 !important;
+}
+
+/* -----------------------------------
+   MULTISELECT / SELECT (BaseWeb)
+----------------------------------- */
 div[data-baseweb="select"] {
     background-color: transparent !important;
     box-shadow: none !important;
 }
 
 div[data-baseweb="select"] > div {
-    background-color: #A27DA2 !important;
-    border: 1px solid #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 2px solid #D7DF23 !important;
     border-radius: 8px !important;
-    color: #FFFFFF !important;
+    color: #542D54 !important;
+    min-height: 44px !important;
 }
 
 div[data-baseweb="select"] div[role="combobox"] {
-    color: #FFFFFF !important;
+    color: #542D54 !important;
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
 }
 
-div[data-baseweb="select"] input {
-    color: #FFFFFF !important;
-    -webkit-text-fill-color: #FFFFFF !important;
-}
+div[data-baseweb="select"] input,
 div[data-baseweb="select"] input::placeholder {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-    -webkit-text-fill-color: #FFFFFF !important;
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+    opacity: 0.8 !important;
+    font-weight: 600 !important;
 }
 
 div[data-baseweb="select"] div[role="combobox"] span,
 div[data-baseweb="select"] div[role="combobox"] div,
 div[data-baseweb="select"] div[role="combobox"] p {
-    color: #FFFFFF !important;
+    color: #542D54 !important;
 }
 
+/* Selected tags (multiselect chips) */
 div[data-baseweb="tag"],
 span[data-baseweb="tag"] {
     background-color: #542D54 !important;
@@ -254,6 +331,7 @@ span[data-baseweb="tag"] {
     border-radius: 6px !important;
     border: 1px solid #542D54 !important;
     font-family: 'Montserrat', sans-serif !important;
+    font-weight: 600 !important;
 }
 div[data-baseweb="tag"] span,
 span[data-baseweb="tag"] span {
@@ -265,11 +343,39 @@ span[data-baseweb="tag"] svg {
     color: #FFFFFF !important;
 }
 
+/* Dropdown menu popup */
+div[data-baseweb="popover"] ul,
+div[data-baseweb="menu"] {
+    background: #FFFFFF !important;
+    border: 2px solid #D7DF23 !important;
+    border-radius: 10px !important;
+}
+
+div[data-baseweb="popover"] li,
+div[data-baseweb="menu"] li {
+    color: #542D54 !important;
+    font-weight: 600 !important;
+}
+
+div[data-baseweb="popover"] li:hover,
+div[data-baseweb="menu"] li:hover {
+    background: #F2F2F2 !important;
+}
+
+/* -----------------------------------
+   FILE UPLOADER (dashed purple drop zone)
+----------------------------------- */
 div[data-testid="stFileUploader"] {
-    background-color: #A27DA2 !important;
-    border: 1px solid #FFFFFF !important;
-    border-radius: 8px !important;
+    background-color: #F7F7F7 !important;
+    border: 3px dashed #542D54 !important;
+    border-radius: 12px !important;
     box-shadow: none !important;
+    padding: 8px !important;
+}
+
+div[data-testid="stFileUploader"]:hover {
+    background-color: #ECECEC !important;
+    border-color: #D7DF23 !important;
 }
 
 div[data-testid="stFileUploader"] label {
@@ -277,11 +383,17 @@ div[data-testid="stFileUploader"] label {
     visibility: hidden !important;
 }
 
+div[data-testid="stFileUploaderDropzone"] {
+    background-color: transparent !important;
+    border: none !important;
+}
+
 div[data-testid="stFileUploaderDropzone"] * {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
     fill: #542D54 !important;
     opacity: 1 !important;
+    font-weight: 600 !important;
 }
 
 div[data-testid="stFileUploaderDropzone"] svg,
@@ -291,12 +403,14 @@ div[data-testid="stFileUploaderDropzone"] svg * {
     opacity: 1 !important;
 }
 
+/* "Browse files" button inside uploader \u2014 styled as yellow pill */
 div[data-testid="stFileUploader"] button {
-    background-color: #FFFFFF !important;
-    border: 1px solid #542D54 !important;
-    border-radius: 8px !important;
+    background-color: #D7DF23 !important;
+    border: none !important;
+    border-radius: 999px !important;
     box-shadow: none !important;
     font-weight: 700 !important;
+    padding: 10px 24px !important;
 }
 
 div[data-testid="stFileUploader"] button,
@@ -314,50 +428,112 @@ div[data-testid="stFileUploader"] [role="button"] * {
 }
 
 div[data-testid="stFileUploader"] button:hover {
-    background-color: #C8A7C9 !important;
-    border-color: #542D54 !important;
+    background-color: #C8D51E !important;
+    border-color: transparent !important;
 }
 
+/* Uploaded file list row shown inside uploader after upload */
+div[data-testid="stFileUploader"] small,
+div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"] {
+    color: #542D54 !important;
+}
+
+/* -----------------------------------
+   BUTTONS (Generate / Reset / Download)
+   Match Check My Specs .gawk-button pill style
+----------------------------------- */
 .stButton > button,
 .stDownloadButton > button {
     display: block;
     margin: 0 auto;
-    background-color: #A27DA2 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #FFFFFF !important;
-    border-radius: 8px !important;
+    background-color: #D7DF23 !important;
+    color: #542D54 !important;
+    border: none !important;
+    border-radius: 999px !important;
     font-family: 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    padding: 14px 32px !important;
+    box-shadow: none !important;
+    transition: 0.2s ease !important;
 }
 
-.stButton > button:hover {
-    background-color: #C8A7C9 !important;
-    color: #FFFFFF !important;
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background-color: #C8D51E !important;
+    color: #542D54 !important;
 }
 
 .stButton > button:disabled,
 .stDownloadButton > button:disabled {
-    background-color: #d0c0d3 !important;
-    color: grey !important;
-    opacity: 0.5 !important;
+    background-color: #D7DF23 !important;
+    color: #542D54 !important;
+    opacity: 0.4 !important;
     cursor: not-allowed !important;
 }
 
-.stDownloadButton > button:disabled {
-    color: #FFFFFF !important;
-    opacity: 0.4 !important;
+/* -----------------------------------
+   RESULTS: st.success / warning / error
+   Match Check My Specs result-box style
+----------------------------------- */
+div[data-testid="stAlert"] {
+    background: #FFFFFF !important;
+    border: 3px solid #D7DF23 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    color: #542D54 !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+    box-shadow: none !important;
 }
 
-label, .css-1cpxqw2 {
-    color: #FFFFFF !important;
+div[data-testid="stAlert"] * {
+    color: #542D54 !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
+/* Green accent for success alerts */
+div[data-testid="stAlert"][class*="success"] strong,
+div[data-testid="stAlert"] [data-testid="stAlertContentSuccess"] strong {
+    color: #2A7A34 !important;
+}
+
+/* Red accent for error alerts */
+div[data-testid="stAlert"][class*="error"] strong,
+div[data-testid="stAlert"] [data-testid="stAlertContentError"] strong {
+    color: #B00020 !important;
+}
+
+/* -----------------------------------
+   IMAGE CAPTIONS (thumbnails)
+----------------------------------- */
+div[data-testid="stImage"] caption,
+div[data-testid="stImageCaption"],
+figcaption {
+    color: #542D54 !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    text-align: center !important;
+}
+
+/* -----------------------------------
+   FOCUS STATES
+----------------------------------- */
 input:focus,
 textarea:focus,
 select:focus,
-div[data-baseweb="select"]:focus {
+div[data-baseweb="select"]:focus-within > div {
     outline: none !important;
-    box-shadow: none !important;
+    box-shadow: 0 0 0 2px rgba(215, 223, 35, 0.35) !important;
+    border-color: #D7DF23 !important;
+}
+
+/* -----------------------------------
+   Header image \u2014 keep current placement,
+   full-width, no card wrapper
+----------------------------------- */
+div[data-testid="stImage"] img {
+    border-radius: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
