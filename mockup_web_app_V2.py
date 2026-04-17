@@ -407,8 +407,9 @@ div[data-testid="stFileUploaderDropzone"] svg * {
     opacity: 1 !important;
 }
 
-/* "Browse files" button inside uploader \u2014 yellow pill.
-   Narrowed selectors so we don't double-render button text. */
+/* "Browse files" / "upload" button inside uploader — yellow pill.
+   Fix for doubled text: reset pseudo-elements and hide any icon/SVG
+   children that may be stacking on top of the label. */
 div[data-testid="stFileUploader"] button[kind="secondary"],
 div[data-testid="stFileUploader"] button {
     background-color: #D7DF23 !important;
@@ -418,12 +419,29 @@ div[data-testid="stFileUploader"] button {
     box-shadow: none !important;
     font-weight: 700 !important;
     padding: 10px 24px !important;
+    /* Kill any pseudo-element content that may be stacking */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+}
+
+div[data-testid="stFileUploader"] button::before,
+div[data-testid="stFileUploader"] button::after {
+    content: none !important;
+    display: none !important;
 }
 
 div[data-testid="stFileUploader"] button p {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
     margin: 0 !important;
+    line-height: 1 !important;
+}
+
+/* Hide any SVG icon inside the button so it can't overlap the label */
+div[data-testid="stFileUploader"] button svg {
+    display: none !important;
 }
 
 div[data-testid="stFileUploader"] button:hover {
