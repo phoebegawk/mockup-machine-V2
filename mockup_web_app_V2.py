@@ -207,61 +207,64 @@ header, .st-emotion-cache-18ni7ap {
     max-width: 1200px !important;
 }
 
+/* Hide the sentinel anchor itself \u2014 it's only there for CSS targeting */
+.gawk-card-anchor {
+    display: none !important;
+}
+
 /* -----------------------------------
-   WHITE CARD WRAPPER
-   Apply white-card-with-yellow-border styling
-   to Streamlit's top-level vertical block groups
-   so form controls sit inside panels like Check My Specs.
+   WHITE CARD WRAPPER (sentinel-based)
+   The main_card st.container() has a
+   <span class="gawk-card-anchor"> placed
+   inside it as its first markdown child.
+   We find the nearest stVerticalBlock
+   ancestor containing that anchor and
+   style it as the white card.
 ----------------------------------- */
-section.main .block-container > div[data-testid="stVerticalBlock"] {
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) {
     background: #FFFFFF !important;
     border-radius: 12px !important;
     border: 3px solid #D7DF23 !important;
-    padding: 20px 32px !important;
-    margin-bottom: 24px !important;
+    padding: 24px 32px !important;
+    margin: 0 auto 24px auto !important;
     color: #542D54 !important;
 }
 
-/* Revert the card treatment on nested vertical blocks so we don't
-   end up with nested white cards inside the outer card. */
-section.main .block-container
-    div[data-testid="stVerticalBlock"]
+/* Reset styling on nested vertical blocks inside the card so we
+   don't accumulate borders on stColumns / inner containers. */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor)
     div[data-testid="stVerticalBlock"] {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
-    margin-bottom: 0 !important;
+    margin: 0 !important;
 }
 
-/* Horizontal blocks (st.columns) should stay transparent */
+/* Horizontal blocks (st.columns) always transparent */
 div[data-testid="stHorizontalBlock"] {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
 }
 
-/* Header image stays full-width above the cards (no card wrapper) */
-section.main .block-container > div[data-testid="stVerticalBlock"]:has(> div[data-testid="stImage"]:first-child:last-child) {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    margin-bottom: 16px !important;
-}
-
 /* -----------------------------------
-   LABELS (inside white cards = purple)
+   LABELS
+   Default: white (for anything outside the card).
+   Inside the card: purple.
 ----------------------------------- */
 label,
-.stTextInput label,
-.stMultiSelect label,
-.stFileUploader label,
-.stDateInput label,
 div[data-testid="stWidgetLabel"],
 div[data-testid="stWidgetLabel"] p {
-    color: #542D54 !important;
+    color: #FFFFFF !important;
     font-weight: 700 !important;
     font-size: 15px !important;
     font-family: 'Montserrat', sans-serif !important;
+}
+
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) label,
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) div[data-testid="stWidgetLabel"],
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) div[data-testid="stWidgetLabel"] p {
+    color: #542D54 !important;
 }
 
 /* -----------------------------------
@@ -378,20 +381,21 @@ div[data-testid="stFileUploader"]:hover {
     border-color: #D7DF23 !important;
 }
 
-div[data-testid="stFileUploader"] label {
-    display: none !important;
-    visibility: hidden !important;
-}
+/* Do NOT hide the label \u2014 we want "Upload Artwork File(s):" visible */
 
 div[data-testid="stFileUploaderDropzone"] {
     background-color: transparent !important;
     border: none !important;
 }
 
-div[data-testid="stFileUploaderDropzone"] * {
+/* Colour the dropzone text/icons purple (but don't touch children
+   of the Browse button \u2014 see below) */
+div[data-testid="stFileUploaderDropzone"] > div,
+div[data-testid="stFileUploaderDropzone"] > small,
+div[data-testid="stFileUploaderDropzone"] section,
+div[data-testid="stFileUploaderDropzone"] span {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
-    fill: #542D54 !important;
     opacity: 1 !important;
     font-weight: 600 !important;
 }
@@ -403,9 +407,12 @@ div[data-testid="stFileUploaderDropzone"] svg * {
     opacity: 1 !important;
 }
 
-/* "Browse files" button inside uploader \u2014 styled as yellow pill */
+/* "Browse files" button inside uploader \u2014 yellow pill.
+   Narrowed selectors so we don't double-render button text. */
+div[data-testid="stFileUploader"] button[kind="secondary"],
 div[data-testid="stFileUploader"] button {
     background-color: #D7DF23 !important;
+    color: #542D54 !important;
     border: none !important;
     border-radius: 999px !important;
     box-shadow: none !important;
@@ -413,18 +420,10 @@ div[data-testid="stFileUploader"] button {
     padding: 10px 24px !important;
 }
 
-div[data-testid="stFileUploader"] button,
-div[data-testid="stFileUploader"] button * {
+div[data-testid="stFileUploader"] button p {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
-    opacity: 1 !important;
-}
-
-div[data-testid="stFileUploader"] [role="button"],
-div[data-testid="stFileUploader"] [role="button"] * {
-    color: #542D54 !important;
-    -webkit-text-fill-color: #542D54 !important;
-    opacity: 1 !important;
+    margin: 0 !important;
 }
 
 div[data-testid="stFileUploader"] button:hover {
@@ -432,7 +431,7 @@ div[data-testid="stFileUploader"] button:hover {
     border-color: transparent !important;
 }
 
-/* Uploaded file list row shown inside uploader after upload */
+/* Uploaded file list row shown after upload */
 div[data-testid="stFileUploader"] small,
 div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"] {
     color: #542D54 !important;
@@ -440,7 +439,7 @@ div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"] {
 
 /* -----------------------------------
    BUTTONS (Generate / Reset / Download)
-   Match Check My Specs .gawk-button pill style
+   Yellow pill primary
 ----------------------------------- */
 .stButton > button,
 .stDownloadButton > button {
@@ -464,11 +463,14 @@ div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"] {
     color: #542D54 !important;
 }
 
+/* Disabled state \u2014 ghosted white pill so it reads cleanly
+   against both purple background and white card */
 .stButton > button:disabled,
 .stDownloadButton > button:disabled {
-    background-color: #D7DF23 !important;
+    background-color: #FFFFFF !important;
     color: #542D54 !important;
-    opacity: 0.4 !important;
+    border: 2px solid #D7DF23 !important;
+    opacity: 0.55 !important;
     cursor: not-allowed !important;
 }
 
@@ -505,7 +507,7 @@ div[data-testid="stAlert"] [data-testid="stAlertContentError"] strong {
 }
 
 /* -----------------------------------
-   IMAGE CAPTIONS (thumbnails)
+   IMAGE CAPTIONS
 ----------------------------------- */
 div[data-testid="stImage"] caption,
 div[data-testid="stImageCaption"],
@@ -514,6 +516,11 @@ figcaption {
     font-weight: 600 !important;
     font-size: 12px !important;
     text-align: center !important;
+}
+
+/* Captions outside the card (if any) stay white */
+.block-container > div[data-testid="stImage"] figcaption {
+    color: #FFFFFF !important;
 }
 
 /* -----------------------------------
@@ -528,10 +535,7 @@ div[data-baseweb="select"]:focus-within > div {
     border-color: #D7DF23 !important;
 }
 
-/* -----------------------------------
-   Header image \u2014 keep current placement,
-   full-width, no card wrapper
------------------------------------ */
+/* Header image \u2014 keep current placement, no radius clipping */
 div[data-testid="stImage"] img {
     border-radius: 0 !important;
 }
@@ -569,22 +573,33 @@ CLIENT_KEY = f"{CLIENT_KEY_BASE}_{nonce}"
 DATE_KEY = f"{DATE_KEY_BASE}_{nonce}"
 
 # ---------------------------
+# Main Card (wraps the interactive inputs so CSS can style it as a
+# Check My Specs white-card-with-yellow-border panel)
+# ---------------------------
+main_card = st.container()
+main_card.markdown(
+    '<span class="gawk-card-anchor"></span>',
+    unsafe_allow_html=True,
+)
+
+# ---------------------------
 # Template Selection
 # ---------------------------
 template_keys = list(TEMPLATE_COORDINATES.keys())
 template_display_names = [name.replace(".png", "") for name in template_keys]
 
-selected_display_names = st.multiselect(
-    "📍 Select Billboard(s):",
-    template_display_names,
-    key=SELECT_KEY,
-)
+with main_card:
+    selected_display_names = st.multiselect(
+        "📍 Select Billboard(s):",
+        template_display_names,
+        key=SELECT_KEY,
+    )
 selected_templates = [name + ".png" for name in selected_display_names]
 
 # ---------------------------
 # Artwork Upload
 # ---------------------------
-artwork_files = st.file_uploader(
+artwork_files = main_card.file_uploader(
     "🖼️ Upload Artwork File(s):",
     type=["jpg", "jpeg", "png"],
     accept_multiple_files=True,
@@ -595,7 +610,7 @@ prepared_artworks = []
 preview_images = []
 
 if artwork_files:
-    cols = st.columns(4)
+    cols = main_card.columns(4)
 
     preview_job_dir = TMP_DIR / "preview_cache"
     preview_job_dir.mkdir(exist_ok=True)
@@ -608,7 +623,7 @@ if artwork_files:
             prepared_artworks.append(metadata)
 
             if metadata["needs_resize"]:
-                st.warning(
+                main_card.warning(
                     f"⚠️ {metadata['original_name']} is very large ({metadata['width']}×{metadata['height']}). "
                     f"It will be resized to stay under safe limits, stored LOSSLESS."
                 )
@@ -617,7 +632,7 @@ if artwork_files:
             preview_images.append(preview)
 
         except Exception as e:
-            st.error(f"❌ Error processing {file.name}: {e}")
+            main_card.error(f"❌ Error processing {file.name}: {e}")
             continue
 
         with cols[idx % 4]:
@@ -627,18 +642,13 @@ if artwork_files:
 # ---------------------------
 # Client & Date Input
 # ---------------------------
-client_name = st.text_input("🔍 Client Name:", key=CLIENT_KEY)
-live_date = st.text_input("🗓️ Live Date (DDMMYY):", key=DATE_KEY)
+client_name = main_card.text_input("🔍 Client Name:", key=CLIENT_KEY)
+live_date = main_card.text_input("🗓️ Live Date (DDMMYY):", key=DATE_KEY)
 
 # ---------------------------
 # Buttons Row
 # ---------------------------
-st.markdown(
-    "<div style='display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;'>",
-    unsafe_allow_html=True,
-)
-
-col1, col2, col3 = st.columns([1, 1, 1], gap="large")
+col1, col2, col3 = main_card.columns([1, 1, 1], gap="large")
 
 with col1:
     generate_clicked = st.button("Generate", width="stretch")
@@ -672,8 +682,6 @@ with col2:
 
 with col3:
     reset_clicked = st.button("Reset All", width="stretch")
-
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
 # Reset Logic
