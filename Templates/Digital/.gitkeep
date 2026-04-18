@@ -1,0 +1,7 @@
+# Place your digital billboard PNG templates in this directory.
+#
+# Each template filename must exactly match a key in template_coordinates.py.
+# Example: "Ballarat (Digital) - 33503-D.png"
+#
+# This file (.gitkeep) exists only to ensure the empty directory is tracked
+# by git. You can delete it once you've added real templates.

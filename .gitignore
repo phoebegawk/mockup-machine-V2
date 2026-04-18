@@ -1,42 +1,33 @@
-# Byte-compiled / optimized / DLL files
+# ---- Python ----
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Local environment / config
-.env
-.venv/
-venv/
-env/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Python packaging
+*.so
+.Python
 build/
 dist/
 *.egg-info/
+.venv/
+venv/
+env/
+ENV/
 
-# Logs / cache
-*.log
-*.bak
-.cache/
+# ---- Streamlit ----
+.streamlit/secrets.toml
 
-# Editor / IDE files
-.vscode/
-.idea/
-
-# Uploaded + generated files
+# ---- App runtime artefacts ----
+# These directories are created by the app at runtime.
+# They should NEVER be committed.
 uploaded_artwork/
 generated_mockups/
-Templates/Digital/__pycache__/
+tmp/
 
-# Streamlit specific
-.streamlit/
+# ---- IDE / OS ----
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
 
-# Zip and archive files
-*.zip
-
-# Exclude image templates
-!Templates/Digital/*.png
+# ---- Render ----
+.render/

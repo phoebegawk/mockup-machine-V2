@@ -444,6 +444,16 @@ div[data-testid="stFileUploader"] button svg {
     display: none !important;
 }
 
+/* Streamlit 1.56 renders the button label twice:
+   once as a shortcut/icon <span> and once as visible <p>Upload</p>
+   inside a markdown container. Hide any <span> that sits beside the
+   markdown container inside the button. */
+div[data-testid="stFileUploader"] button span:has(~ div[data-testid="stMarkdownContainer"]),
+div[data-testid="stFileUploader"] button div[data-testid="stMarkdownContainer"] ~ span,
+div[data-testid="stFileUploader"] button [data-has-shortcut] {
+    display: none !important;
+}
+
 div[data-testid="stFileUploader"] button:hover {
     background-color: #C8D51E !important;
     border-color: transparent !important;
