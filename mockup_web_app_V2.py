@@ -426,8 +426,7 @@ div[data-testid="stFileUploader"] button {
     gap: 6px !important;
 }
 
-div[data-testid="stFileUploader"] button::before,
-div[data-testid="stFileUploader"] button::after {
+div[data-testid="stFileUploader"] button::before {
     content: none !important;
     display: none !important;
 }
@@ -444,14 +443,21 @@ div[data-testid="stFileUploader"] button svg {
     display: none !important;
 }
 
-/* Streamlit 1.56 renders the button label twice:
-   once as a shortcut/icon <span> and once as visible <p>Upload</p>
-   inside a markdown container. Hide any <span> that sits beside the
-   markdown container inside the button. */
-div[data-testid="stFileUploader"] button span:has(~ div[data-testid="stMarkdownContainer"]),
-div[data-testid="stFileUploader"] button div[data-testid="stMarkdownContainer"] ~ span,
-div[data-testid="stFileUploader"] button [data-has-shortcut] {
+/* Streamlit 1.56's upload button renders its label in multiple places
+   depending on version/state. Cleanest solution: hide ALL native button
+   children and inject a single "Upload" label via ::after. */
+div[data-testid="stFileUploader"] button > * {
     display: none !important;
+}
+
+div[data-testid="stFileUploader"] button::after {
+    content: "Upload" !important;
+    display: inline !important;
+    color: #542D54 !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    line-height: 1 !important;
 }
 
 div[data-testid="stFileUploader"] button:hover {
