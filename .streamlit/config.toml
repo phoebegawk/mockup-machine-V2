@@ -1,4 +1,5 @@
 [server]
+enableXsrfProtection = false
 headless = true
 enableCORS = false
 enableWebsocketCompression = false
