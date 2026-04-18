@@ -198,6 +198,12 @@ html, body, .main, .stAppViewContainer {
     box-sizing: border-box;
 }
 
+/* Preserve Material Symbols icon font on Streamlit's icon glyphs */
+[data-testid="stIconMaterial"],
+span[data-testid="stIconMaterial"] {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+}
+
 header, .st-emotion-cache-18ni7ap {
     background-color: transparent !important;
 }
