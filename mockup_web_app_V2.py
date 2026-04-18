@@ -1,5 +1,11 @@
 import os
+import shutil
+import uuid
 import zipfile
+import gc
+from contextlib import suppress
+from pathlib import Path
+
 from PIL import Image, ImageOps
 import streamlit as st
 
@@ -9,6 +15,138 @@ from template_coordinates import TEMPLATE_COORDINATES
 # --- Artwork Safety Limits ---
 MAX_EDGE = 8000            # max width/height in pixels
 MAX_PIXELS = 50_000_000    # max total pixel count (50 megapixels)
+PREVIEW_THUMBNAIL = (1200, 1200)
+RESULT_THUMBNAIL = (300, 300)
+
+# ---------------------------
+# Paths
+# ---------------------------
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = BASE_DIR / "Templates"
+OUTPUT_DIR = BASE_DIR / "generated_mockups"
+UPLOAD_DIR = BASE_DIR / "uploaded_artwork"
+TMP_DIR = BASE_DIR / "tmp"
+
+OUTPUT_DIR.mkdir(exist_ok=True)
+UPLOAD_DIR.mkdir(exist_ok=True)
+TMP_DIR.mkdir(exist_ok=True)
+
+
+# ---------------------------
+# Helpers
+# ---------------------------
+def safe_remove_file(path: Path) -> None:
+    with suppress(Exception):
+        if path.exists() and path.is_file():
+            path.unlink()
+
+
+def safe_remove_dir_contents(path: Path) -> None:
+    if not path.exists() or not path.is_dir():
+        return
+    for item in path.iterdir():
+        with suppress(Exception):
+            if item.is_dir():
+                shutil.rmtree(item, ignore_errors=True)
+            else:
+                item.unlink()
+
+
+def cleanup_job_files(job_dir: Path) -> None:
+    with suppress(Exception):
+        if job_dir.exists():
+            shutil.rmtree(job_dir, ignore_errors=True)
+
+
+def file_size_mb(path: Path) -> float:
+    try:
+        return path.stat().st_size / (1024 * 1024)
+    except Exception:
+        return 0.0
+
+
+def prepare_artwork_file(uploaded_file, target_dir: Path):
+    """
+    Saves the uploaded artwork to disk while preserving current logic:
+    - Original JPG/JPEG/PNG bytes are kept as-is unless resize is required.
+    - Oversized files are resized and stored losslessly as PNG.
+    Returns metadata for downstream use.
+    """
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    original_name = Path(uploaded_file.name).name
+    base_name = Path(original_name).stem
+    original_ext = Path(original_name).suffix.lower()
+    original_path = target_dir / original_name
+    png_resized_path = target_dir / f"{base_name}.png"
+
+    try:
+        uploaded_file.seek(0)
+    except Exception:
+        pass
+
+    with Image.open(uploaded_file) as opened:
+        img = ImageOps.exif_transpose(opened)
+        width, height = img.size
+        total_pixels = width * height
+        needs_resize = (total_pixels > MAX_PIXELS) or (max(width, height) > MAX_EDGE)
+
+        if needs_resize:
+            scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
+            new_size = (max(1, int(width * scale_factor)), max(1, int(height * scale_factor)))
+            resized = img.resize(new_size, Image.LANCZOS)
+            try:
+                resized.convert("RGBA").save(png_resized_path, "PNG", optimize=True)
+            finally:
+                resized.close()
+            saved_path = png_resized_path
+        else:
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
+            with open(original_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            saved_path = original_path
+
+    gc.collect()
+
+    return {
+        "original_name": original_name,
+        "base_name": base_name,
+        "original_ext": original_ext,
+        "saved_path": saved_path,
+        "original_path": original_path,
+        "png_resized_path": png_resized_path,
+        "width": width,
+        "height": height,
+        "total_pixels": total_pixels,
+        "needs_resize": needs_resize,
+    }
+
+
+def build_preview_image(path: Path):
+    with Image.open(path) as img:
+        preview = ImageOps.exif_transpose(img)
+        preview.thumbnail(PREVIEW_THUMBNAIL)
+        return preview.copy()
+
+
+def build_result_thumbnail(path: Path):
+    with Image.open(path) as img:
+        thumb = ImageOps.exif_transpose(img)
+        thumb.thumbnail(RESULT_THUMBNAIL)
+        return thumb.copy()
+
+
+def clear_generation_state():
+    st.session_state["generated_outputs"] = []
+    st.session_state["zip_path"] = None
+    st.session_state["zip_name"] = None
+    st.session_state["generation_errors"] = []
+    st.session_state["rerun_after_generate"] = False
+    st.session_state["active_job_dir"] = None
+
 
 # ---------------------------
 # UI Config
@@ -20,25 +158,26 @@ st.set_page_config(
 )
 
 # Header
-st.image(
-    "https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/Header-UI-Mock.png",
-    use_container_width=True
-)
+HEADER_PATH = BASE_DIR / "assets" / "Header-MockUpMachine.png"
+
+if HEADER_PATH.exists():
+    st.image(str(HEADER_PATH), use_container_width=True)
+else:
+    st.warning(f"Header image not found: {HEADER_PATH}")
 
 # ---------------------------
 # Style Block (CLEAN + FINAL)
 # ---------------------------
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
-/* ---------------------------
-   GLOBAL
---------------------------- */
-
+/* -----------------------------------
+   GLOBAL PAGE (background untouched)
+----------------------------------- */
 .stApp {
-    background-color: #542D54 !important; /* fallback */
-    background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine-V2/main/assets/MockUpMachine-BG.png") !important;
+    background-color: #542D54 !important;
+    background-image: url("https://raw.githubusercontent.com/phoebegawk/mockup-machine/main/assets/MockUpMachine-BG.png") !important;
     background-repeat: no-repeat !important;
     background-size: cover !important;
     background-position: center center !important;
@@ -49,74 +188,145 @@ html, body, .main, .stAppViewContainer {
     background-color: transparent !important;
     color: #FFFFFF !important;
     font-family: 'Montserrat', sans-serif !important;
-    font-size: 18px !important;
+    font-size: 16px !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
+* {
+    font-family: 'Montserrat', sans-serif !important;
+    box-sizing: border-box;
+}
+
 header, .st-emotion-cache-18ni7ap {
-    background-color: #542D54 !important;
+    background-color: transparent !important;
 }
 
 .block-container {
     padding-top: 2rem !important;
+    max-width: 1200px !important;
 }
 
-/* ---------------------------
-   INPUTS (GENERAL)
---------------------------- */
-input, textarea, select,
-.stTextInput input,
-.stTextArea textarea,
-.stDateInput input,
-.stMultiSelect > div,
-.stSelectbox > div {
-    border-radius: 8px !important;
-    border: 1px solid #FFFFFF !important;
-    box-shadow: none !important;
-    background-color: #A27DA2 !important;
-    color: #000000 !important;
+/* Hide the sentinel anchor itself \u2014 it's only there for CSS targeting */
+.gawk-card-anchor {
+    display: none !important;
+}
+
+/* -----------------------------------
+   WHITE CARD WRAPPER (sentinel-based)
+   The main_card st.container() has a
+   <span class="gawk-card-anchor"> placed
+   inside it as its first markdown child.
+   We find the nearest stVerticalBlock
+   ancestor containing that anchor and
+   style it as the white card.
+----------------------------------- */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) {
+    background: #FFFFFF !important;
+    border-radius: 12px !important;
+    border: 3px solid #D7DF23 !important;
+    padding: 24px 32px !important;
+    margin: 0 auto 24px auto !important;
+    color: #542D54 !important;
+}
+
+/* Reset styling on nested vertical blocks inside the card so we
+   don't accumulate borders on stColumns / inner containers. */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor)
+    div[data-testid="stVerticalBlock"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Horizontal blocks (st.columns) always transparent */
+div[data-testid="stHorizontalBlock"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* -----------------------------------
+   LABELS
+   Default: white (for anything outside the card).
+   Inside the card: purple.
+----------------------------------- */
+label,
+div[data-testid="stWidgetLabel"],
+div[data-testid="stWidgetLabel"] p {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* ---------------------------
-   MULTISELECT (BASEWEB)
---------------------------- */
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) label,
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) div[data-testid="stWidgetLabel"],
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-card-anchor) div[data-testid="stWidgetLabel"] p {
+    color: #542D54 !important;
+}
+
+/* -----------------------------------
+   TEXT INPUTS
+----------------------------------- */
+.stTextInput input,
+.stTextArea textarea,
+.stDateInput input {
+    background-color: #FFFFFF !important;
+    color: #542D54 !important;
+    border-radius: 8px !important;
+    border: 2px solid #D7DF23 !important;
+    box-shadow: none !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    padding: 10px 14px !important;
+}
+
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #542D54 !important;
+    opacity: 0.6 !important;
+}
+
+/* -----------------------------------
+   MULTISELECT / SELECT (BaseWeb)
+----------------------------------- */
 div[data-baseweb="select"] {
     background-color: transparent !important;
     box-shadow: none !important;
 }
 
 div[data-baseweb="select"] > div {
-    background-color: #A27DA2 !important;
-    border: 1px solid #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 2px solid #D7DF23 !important;
     border-radius: 8px !important;
-    color: #FFFFFF !important;
+    color: #542D54 !important;
+    min-height: 44px !important;
 }
 
 div[data-baseweb="select"] div[role="combobox"] {
-    color: #FFFFFF !important;
+    color: #542D54 !important;
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
 }
 
-div[data-baseweb="select"] input {
-    color: #FFFFFF !important;
-    -webkit-text-fill-color: #FFFFFF !important;
-}
+div[data-baseweb="select"] input,
 div[data-baseweb="select"] input::placeholder {
-    color: #FFFFFF !important;
-    opacity: 1 !important;
-    -webkit-text-fill-color: #FFFFFF !important;
+    color: #542D54 !important;
+    -webkit-text-fill-color: #542D54 !important;
+    opacity: 0.8 !important;
+    font-weight: 600 !important;
 }
 
 div[data-baseweb="select"] div[role="combobox"] span,
 div[data-baseweb="select"] div[role="combobox"] div,
 div[data-baseweb="select"] div[role="combobox"] p {
-    color: #FFFFFF !important;
+    color: #542D54 !important;
 }
 
+/* Selected tags (multiselect chips) */
 div[data-baseweb="tag"],
 span[data-baseweb="tag"] {
     background-color: #542D54 !important;
@@ -124,6 +334,7 @@ span[data-baseweb="tag"] {
     border-radius: 6px !important;
     border: 1px solid #542D54 !important;
     font-family: 'Montserrat', sans-serif !important;
+    font-weight: 600 !important;
 }
 div[data-baseweb="tag"] span,
 span[data-baseweb="tag"] span {
@@ -135,30 +346,58 @@ span[data-baseweb="tag"] svg {
     color: #FFFFFF !important;
 }
 
-/* =========================
-   FILE UPLOADER — FINAL FIX (PoP-style, stable)
-   ========================= */
+/* Dropdown menu popup */
+div[data-baseweb="popover"] ul,
+div[data-baseweb="menu"] {
+    background: #FFFFFF !important;
+    border: 2px solid #D7DF23 !important;
+    border-radius: 10px !important;
+}
 
-/* Container */
+div[data-baseweb="popover"] li,
+div[data-baseweb="menu"] li {
+    color: #542D54 !important;
+    font-weight: 600 !important;
+}
+
+div[data-baseweb="popover"] li:hover,
+div[data-baseweb="menu"] li:hover {
+    background: #F2F2F2 !important;
+}
+
+/* -----------------------------------
+   FILE UPLOADER (dashed purple drop zone)
+----------------------------------- */
 div[data-testid="stFileUploader"] {
-    background-color: #A27DA2 !important;
-    border: 1px solid #FFFFFF !important;
-    border-radius: 8px !important;
+    background-color: #F7F7F7 !important;
+    border: 3px dashed #542D54 !important;
+    border-radius: 12px !important;
     box-shadow: none !important;
+    padding: 8px !important;
 }
 
-/* Optional: hide uploader label text */
-div[data-testid="stFileUploader"] label {
-    display: none !important;
-    visibility: hidden !important;
+div[data-testid="stFileUploader"]:hover {
+    background-color: #ECECEC !important;
+    border-color: #D7DF23 !important;
 }
 
-/* Dropzone text + icon -> purple */
-div[data-testid="stFileUploaderDropzone"] * {
+/* Do NOT hide the label \u2014 we want "Upload Artwork File(s):" visible */
+
+div[data-testid="stFileUploaderDropzone"] {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+/* Colour the dropzone text/icons purple (but don't touch children
+   of the Browse button \u2014 see below) */
+div[data-testid="stFileUploaderDropzone"] > div,
+div[data-testid="stFileUploaderDropzone"] > small,
+div[data-testid="stFileUploaderDropzone"] section,
+div[data-testid="stFileUploaderDropzone"] span {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
-    fill: #542D54 !important;
     opacity: 1 !important;
+    font-weight: 600 !important;
 }
 
 div[data-testid="stFileUploaderDropzone"] svg,
@@ -168,81 +407,165 @@ div[data-testid="stFileUploaderDropzone"] svg * {
     opacity: 1 !important;
 }
 
-/* Browse files button -> white background, purple text (including nested spans) */
+/* "Browse files" / "upload" button inside uploader — yellow pill.
+   Fix for doubled text: reset pseudo-elements and hide any icon/SVG
+   children that may be stacking on top of the label. */
+div[data-testid="stFileUploader"] button[kind="secondary"],
 div[data-testid="stFileUploader"] button {
-    background-color: #FFFFFF !important;
-    border: 1px solid #542D54 !important;
-    border-radius: 8px !important;
+    background-color: #D7DF23 !important;
+    color: #542D54 !important;
+    border: none !important;
+    border-radius: 999px !important;
     box-shadow: none !important;
     font-weight: 700 !important;
+    padding: 10px 24px !important;
+    /* Kill any pseudo-element content that may be stacking */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
 }
 
-div[data-testid="stFileUploader"] button,
-div[data-testid="stFileUploader"] button * {
+div[data-testid="stFileUploader"] button::before,
+div[data-testid="stFileUploader"] button::after {
+    content: none !important;
+    display: none !important;
+}
+
+div[data-testid="stFileUploader"] button p {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
-    opacity: 1 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
 }
 
-/* Catch role-button variants if Streamlit swaps markup */
-div[data-testid="stFileUploader"] [role="button"],
-div[data-testid="stFileUploader"] [role="button"] * {
-    color: #542D54 !important;
-    -webkit-text-fill-color: #542D54 !important;
-    opacity: 1 !important;
+/* Hide any SVG icon inside the button so it can't overlap the label */
+div[data-testid="stFileUploader"] button svg {
+    display: none !important;
 }
 
-/* Hover */
+/* Streamlit 1.56 renders the button label twice:
+   once as a shortcut/icon <span> and once as visible <p>Upload</p>
+   inside a markdown container. Hide any <span> that sits beside the
+   markdown container inside the button. */
+div[data-testid="stFileUploader"] button span:has(~ div[data-testid="stMarkdownContainer"]),
+div[data-testid="stFileUploader"] button div[data-testid="stMarkdownContainer"] ~ span,
+div[data-testid="stFileUploader"] button [data-has-shortcut] {
+    display: none !important;
+}
+
 div[data-testid="stFileUploader"] button:hover {
-    background-color: #C8A7C9 !important;
-    border-color: #542D54 !important;
+    background-color: #C8D51E !important;
+    border-color: transparent !important;
 }
 
-/* ---------------------------
-   MAIN BUTTONS
---------------------------- */
+/* Uploaded file list row shown after upload */
+div[data-testid="stFileUploader"] small,
+div[data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"] {
+    color: #542D54 !important;
+}
+
+/* -----------------------------------
+   BUTTONS (Generate / Reset / Download)
+   Yellow pill primary
+----------------------------------- */
 .stButton > button,
 .stDownloadButton > button {
     display: block;
     margin: 0 auto;
-    background-color: #A27DA2 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #FFFFFF !important;
-    border-radius: 8px !important;
+    background-color: #D7DF23 !important;
+    color: #542D54 !important;
+    border: none !important;
+    border-radius: 999px !important;
     font-family: 'Montserrat', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    padding: 14px 32px !important;
+    box-shadow: none !important;
+    transition: 0.2s ease !important;
 }
 
-.stButton > button:hover {
-    background-color: #C8A7C9 !important;
-    color: #FFFFFF !important;
+.stButton > button:hover,
+.stDownloadButton > button:hover {
+    background-color: #C8D51E !important;
+    color: #542D54 !important;
 }
 
+/* Disabled state \u2014 ghosted white pill so it reads cleanly
+   against both purple background and white card */
 .stButton > button:disabled,
 .stDownloadButton > button:disabled {
-    background-color: #d0c0d3 !important;
-    color: grey !important;
-    opacity: 0.5 !important;
+    background-color: #FFFFFF !important;
+    color: #542D54 !important;
+    border: 2px solid #D7DF23 !important;
+    opacity: 0.55 !important;
     cursor: not-allowed !important;
 }
 
-.stDownloadButton > button:disabled {
-    color: #FFFFFF !important;
-    opacity: 0.4 !important;
+/* -----------------------------------
+   RESULTS: st.success / warning / error
+   Match Check My Specs result-box style
+----------------------------------- */
+div[data-testid="stAlert"] {
+    background: #FFFFFF !important;
+    border: 3px solid #D7DF23 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    color: #542D54 !important;
+    font-size: 14px !important;
+    line-height: 1.45 !important;
+    box-shadow: none !important;
 }
 
-/* Labels and headings */
-label, .css-1cpxqw2 {
-    color: #FFFFFF !important;
+div[data-testid="stAlert"] * {
+    color: #542D54 !important;
     font-family: 'Montserrat', sans-serif !important;
 }
 
-/* Remove focus glow */
+/* Green accent for success alerts */
+div[data-testid="stAlert"][class*="success"] strong,
+div[data-testid="stAlert"] [data-testid="stAlertContentSuccess"] strong {
+    color: #2A7A34 !important;
+}
+
+/* Red accent for error alerts */
+div[data-testid="stAlert"][class*="error"] strong,
+div[data-testid="stAlert"] [data-testid="stAlertContentError"] strong {
+    color: #B00020 !important;
+}
+
+/* -----------------------------------
+   IMAGE CAPTIONS
+----------------------------------- */
+div[data-testid="stImage"] caption,
+div[data-testid="stImageCaption"],
+figcaption {
+    color: #542D54 !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    text-align: center !important;
+}
+
+/* Captions outside the card (if any) stay white */
+.block-container > div[data-testid="stImage"] figcaption {
+    color: #FFFFFF !important;
+}
+
+/* -----------------------------------
+   FOCUS STATES
+----------------------------------- */
 input:focus,
 textarea:focus,
 select:focus,
-div[data-baseweb="select"]:focus {
+div[data-baseweb="select"]:focus-within > div {
     outline: none !important;
-    box-shadow: none !important;
+    box-shadow: 0 0 0 2px rgba(215, 223, 35, 0.35) !important;
+    border-color: #D7DF23 !important;
+}
+
+/* Header image \u2014 keep current placement, no radius clipping */
+div[data-testid="stImage"] img {
+    border-radius: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -252,36 +575,40 @@ div[data-baseweb="select"]:focus {
 # ---------------------------
 if "generated_outputs" not in st.session_state:
     st.session_state["generated_outputs"] = []
-if "zip_bytes" not in st.session_state:
-    st.session_state["zip_bytes"] = None
+if "zip_path" not in st.session_state:
+    st.session_state["zip_path"] = None
 if "zip_name" not in st.session_state:
     st.session_state["zip_name"] = None
 if "rerun_after_generate" not in st.session_state:
     st.session_state["rerun_after_generate"] = False
-
-# force-reset uploader by changing key
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
-
-# force-reset widgets by changing key (multiselect + text inputs)
 if "reset_nonce" not in st.session_state:
     st.session_state["reset_nonce"] = 0
+if "generation_errors" not in st.session_state:
+    st.session_state["generation_errors"] = []
+if "active_job_dir" not in st.session_state:
+    st.session_state["active_job_dir"] = None
 
-# widget key bases
+# force-reset widgets by changing key (multiselect + text inputs)
 SELECT_KEY_BASE = "selected_display_names_widget"
 CLIENT_KEY_BASE = "client_name_widget"
 DATE_KEY_BASE = "live_date_widget"
 
-# current widget keys (nonce-based)
 nonce = st.session_state["reset_nonce"]
 SELECT_KEY = f"{SELECT_KEY_BASE}_{nonce}"
 CLIENT_KEY = f"{CLIENT_KEY_BASE}_{nonce}"
 DATE_KEY = f"{DATE_KEY_BASE}_{nonce}"
 
-# Paths
-TEMPLATE_DIR = "Templates"
-OUTPUT_DIR = "generated_mockups"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# ---------------------------
+# Main Card (wraps the interactive inputs so CSS can style it as a
+# Check My Specs white-card-with-yellow-border panel)
+# ---------------------------
+main_card = st.container()
+main_card.markdown(
+    '<span class="gawk-card-anchor"></span>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------
 # Template Selection
@@ -289,149 +616,129 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 template_keys = list(TEMPLATE_COORDINATES.keys())
 template_display_names = [name.replace(".png", "") for name in template_keys]
 
-selected_display_names = st.multiselect(
-    "📍 Select Billboard(s):",
-    template_display_names,
-    key=SELECT_KEY
-)
+with main_card:
+    selected_display_names = st.multiselect(
+        "📍 Select Billboard(s):",
+        template_display_names,
+        key=SELECT_KEY,
+    )
 selected_templates = [name + ".png" for name in selected_display_names]
 
 # ---------------------------
 # Artwork Upload
 # ---------------------------
-artwork_files = st.file_uploader(
+artwork_files = main_card.file_uploader(
     "🖼️ Upload Artwork File(s):",
-    type=["jpg", "jpeg"],
+    type=["jpg", "jpeg", "png"],
     accept_multiple_files=True,
-    key=f"artwork_uploader_{st.session_state['uploader_key']}"
+    key=f"artwork_uploader_{st.session_state['uploader_key']}",
 )
 
-# Artwork preview (NO recompression unless resize is required)
+prepared_artworks = []
+preview_images = []
+
 if artwork_files:
-    os.makedirs("uploaded_artwork", exist_ok=True)
-    cols = st.columns(4)
+    cols = main_card.columns(4)
+
+    preview_job_dir = TMP_DIR / "preview_cache"
+    preview_job_dir.mkdir(exist_ok=True)
 
     for idx, file in enumerate(artwork_files):
-        # Default: save original bytes as-is (no recompress)
-        artwork_path = os.path.join("uploaded_artwork", file.name)
+        artwork_path = UPLOAD_DIR / Path(file.name).name
 
         try:
-            img = Image.open(file)
-            img = ImageOps.exif_transpose(img)  # fixes rotation issues
-            width, height = img.size
-            total_pixels = width * height
+            metadata = prepare_artwork_file(file, UPLOAD_DIR)
+            prepared_artworks.append(metadata)
 
-            needs_resize = (total_pixels > MAX_PIXELS) or (max(width, height) > MAX_EDGE)
-
-            if needs_resize:
-                st.warning(
-                    f"⚠️ {file.name} is very large ({width}×{height}). "
+            if metadata["needs_resize"]:
+                main_card.warning(
+                    f"⚠️ {metadata['original_name']} is very large ({metadata['width']}×{metadata['height']}). "
                     f"It will be resized to stay under safe limits, stored LOSSLESS."
                 )
-                scale_factor = min(MAX_EDGE / width, MAX_EDGE / height)
-                new_size = (int(width * scale_factor), int(height * scale_factor))
-                img = img.resize(new_size, Image.LANCZOS)
 
-                # Save resized as PNG (lossless) so warp starts from clean data
-                base_name, _ = os.path.splitext(file.name)
-                artwork_path = os.path.join("uploaded_artwork", f"{base_name}.png")
-                img.convert("RGBA").save(artwork_path, "PNG", optimize=True)
-            else:
-                # Save original upload bytes AS-IS (no extra JPEG pass)
-                with open(artwork_path, "wb") as f:
-                    f.write(file.getbuffer())
+            preview = build_preview_image(metadata["saved_path"])
+            preview_images.append(preview)
 
         except Exception as e:
-            st.error(f"❌ Error processing {file.name}: {e}")
+            main_card.error(f"❌ Error processing {file.name}: {e}")
             continue
 
         with cols[idx % 4]:
-            st.image(artwork_path, caption=os.path.basename(artwork_path), use_container_width=True)
+            st.image(preview_images[-1], caption=os.path.basename(str(metadata["saved_path"])), width="stretch")
             st.markdown("<div style='margin-bottom: -10px;'></div>", unsafe_allow_html=True)
 
 # ---------------------------
 # Client & Date Input
 # ---------------------------
-client_name = st.text_input("🔍 Client Name:", key=CLIENT_KEY)
-live_date = st.text_input("🗓️ Live Date (DDMMYY):", key=DATE_KEY)
+client_name = main_card.text_input("🔍 Client Name:", key=CLIENT_KEY)
+live_date = main_card.text_input("🗓️ Live Date (DDMMYY):", key=DATE_KEY)
 
 # ---------------------------
 # Buttons Row
 # ---------------------------
-st.markdown(
-    "<div style='display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;'>",
-    unsafe_allow_html=True
-)
-
-col1, col2, col3 = st.columns([1, 1, 1], gap="large")
+col1, col2, col3 = main_card.columns([1, 1, 1], gap="large")
 
 with col1:
-    generate_clicked = st.button("Generate", use_container_width=True)
+    generate_clicked = st.button("Generate", width="stretch")
 
 with col2:
-    is_ready = st.session_state["zip_bytes"] is not None
-    st.download_button(
-        label="Download Mock Ups",
-        data=st.session_state["zip_bytes"] if is_ready else b"",
-        file_name=st.session_state["zip_name"] if is_ready else "mockups.zip",
-        mime="application/zip",
-        disabled=not is_ready,
-        use_container_width=True,
-        key="download_button"
-    )
+    zip_path_str = st.session_state.get("zip_path")
+    zip_path = Path(zip_path_str) if zip_path_str else None
+    is_ready = bool(zip_path and zip_path.exists())
+
+    if is_ready:
+        with open(zip_path, "rb") as zip_file:
+            st.download_button(
+                label="Download Mock Ups",
+                data=zip_file,
+                file_name=st.session_state.get("zip_name") or zip_path.name,
+                mime="application/zip",
+                disabled=False,
+                width="stretch",
+                key="download_button",
+            )
+    else:
+        st.download_button(
+            label="Download Mock Ups",
+            data=b"",
+            file_name="mockups.zip",
+            mime="application/zip",
+            disabled=True,
+            width="stretch",
+            key="download_button_disabled",
+        )
 
 with col3:
-    reset_clicked = st.button("Reset All", use_container_width=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+    reset_clicked = st.button("Reset All", width="stretch")
 
 # ---------------------------
-# Reset Logic (NO Streamlit key conflicts)
+# Reset Logic
 # ---------------------------
 if reset_clicked:
-    # clear outputs/state (safe)
-    st.session_state["generated_outputs"] = []
-    st.session_state["zip_bytes"] = None
-    st.session_state["zip_name"] = None
-    st.session_state["generation_errors"] = []
-    st.session_state["rerun_after_generate"] = False
+    old_job_dir = st.session_state.get("active_job_dir")
+    clear_generation_state()
 
-    # clear uploaded previews on disk
-    try:
-        if os.path.isdir("uploaded_artwork"):
-            for f in os.listdir("uploaded_artwork"):
-                try:
-                    os.remove(os.path.join("uploaded_artwork", f))
-                except Exception:
-                    pass
-    except Exception:
-        pass
+    safe_remove_dir_contents(UPLOAD_DIR)
+    safe_remove_dir_contents(OUTPUT_DIR)
 
-    # clear generated files on disk
-    try:
-        if os.path.isdir(OUTPUT_DIR):
-            for f in os.listdir(OUTPUT_DIR):
-                try:
-                    os.remove(os.path.join(OUTPUT_DIR, f))
-                except Exception:
-                    pass
-    except Exception:
-        pass
+    if old_job_dir:
+        cleanup_job_files(Path(old_job_dir))
 
-    # IMPORTANT: reset widgets by changing keys (no direct widget-state writes)
     st.session_state["uploader_key"] += 1
     st.session_state["reset_nonce"] += 1
 
+    gc.collect()
     st.rerun()
 
 # ---------------------------
 # Generation Logic
 # ---------------------------
 if generate_clicked:
-    st.session_state["generated_outputs"] = []
-    st.session_state["generation_errors"] = []
-    st.session_state["zip_bytes"] = None
-    st.session_state["zip_name"] = None
+    old_job_dir = st.session_state.get("active_job_dir")
+    if old_job_dir:
+        cleanup_job_files(Path(old_job_dir))
+
+    clear_generation_state()
 
     if not selected_templates:
         st.session_state["generation_errors"].append("Please select at least one template.")
@@ -440,104 +747,123 @@ if generate_clicked:
     elif not client_name or not live_date:
         st.session_state["generation_errors"].append("Please enter client name and live date.")
     else:
-        for selected_template in selected_templates:
-            template_path = os.path.join(TEMPLATE_DIR, "Digital", selected_template)
+        job_id = uuid.uuid4().hex
+        job_dir = TMP_DIR / f"job_{job_id}"
+        job_upload_dir = job_dir / "uploaded_artwork"
+        job_output_dir = job_dir / "generated_mockups"
+        job_upload_dir.mkdir(parents=True, exist_ok=True)
+        job_output_dir.mkdir(parents=True, exist_ok=True)
+        st.session_state["active_job_dir"] = str(job_dir)
 
-            template_data = TEMPLATE_COORDINATES.get(selected_template)
-            if not template_data:
-                st.session_state["generation_errors"].append(f"Coordinates not found for {selected_template}.")
-                continue
-
-            panel_keys = [k for k in ("LHS", "MID", "RHS") if k in template_data]
-            is_multi_panel = "split_ratios" in template_data and len(panel_keys) >= 2
-            coords = template_data if is_multi_panel else template_data["LHS"]
-
+        generation_artworks = []
+        try:
             for artwork_file in artwork_files:
                 try:
-                    base_name, _ = os.path.splitext(artwork_file.name)
-                    png_path = os.path.join("uploaded_artwork", f"{base_name}.png")
-                    jpg_path = os.path.join("uploaded_artwork", artwork_file.name)
-                    artwork_path = png_path if os.path.exists(png_path) else jpg_path
-
-                    if not os.path.exists(artwork_path):
-                        os.makedirs("uploaded_artwork", exist_ok=True)
-                        with open(jpg_path, "wb") as f:
-                            f.write(artwork_file.getbuffer())
-                        artwork_path = jpg_path
-
-                    filename_no_ext = os.path.splitext(artwork_file.name)[0]
-                    parts = filename_no_ext.split(" - ")
-                    campaign_name = parts[1].strip() if len(parts) >= 3 else parts[-1].strip()
-
-                    final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
-                    output_path = os.path.join(OUTPUT_DIR, final_filename)
-
-                    base, ext = os.path.splitext(output_path)
-                    counter = 1
-                    temp_output_path = output_path
-                    while os.path.exists(temp_output_path):
-                        temp_output_path = f"{base}_{counter}{ext}"
-                        counter += 1
-
-                    output_path = temp_output_path
-                    final_filename = os.path.basename(output_path)
-
-                    if is_multi_panel:
-                        generate_multi_panel_mockup(template_path, artwork_path, output_path, coords)
-                    else:
-                        generate_mockup(template_path, artwork_path, output_path, coords)
-
-                    st.session_state["generated_outputs"].append((final_filename, output_path))
-
+                    generation_artworks.append(prepare_artwork_file(artwork_file, job_upload_dir))
                 except Exception as e:
-                    st.session_state["generation_errors"].append(
-                        f"❌ Error generating mockup for {selected_template}: {e}"
-                    )
+                    st.session_state["generation_errors"].append(f"❌ Error processing {artwork_file.name}: {e}")
 
-        # Build ZIP bytes immediately so Download activates on same click
-        if st.session_state["generated_outputs"]:
-            import io
+            for selected_template in selected_templates:
+                template_path = TEMPLATE_DIR / "Digital" / selected_template
 
-            zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
-            buffer = io.BytesIO()
+                template_data = TEMPLATE_COORDINATES.get(selected_template)
+                if not template_data:
+                    st.session_state["generation_errors"].append(f"Coordinates not found for {selected_template}.")
+                    continue
 
-            with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-                for filename, file_path in st.session_state["generated_outputs"]:
-                    if os.path.exists(file_path):
-                        zipf.write(file_path, arcname=filename)
+                panel_keys = [k for k in ("LHS", "MID", "RHS") if k in template_data]
+                is_multi_panel = "split_ratios" in template_data and len(panel_keys) >= 2
+                coords = template_data if is_multi_panel else template_data["LHS"]
 
-            buffer.seek(0)
-            st.session_state["zip_bytes"] = buffer.getvalue()
-            st.session_state["zip_name"] = zip_name
+                for artwork_meta in generation_artworks:
+                    try:
+                        artwork_path = artwork_meta["saved_path"]
+                        filename_no_ext = artwork_meta["base_name"]
+                        parts = filename_no_ext.split(" - ")
+                        campaign_name = parts[1].strip() if len(parts) >= 3 else parts[-1].strip()
 
-            st.session_state["rerun_after_generate"] = True
-            st.rerun()
+                        final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
+                        output_path = job_output_dir / final_filename
+
+                        base = output_path.stem
+                        ext = output_path.suffix
+                        counter = 1
+                        temp_output_path = output_path
+                        while temp_output_path.exists():
+                            temp_output_path = job_output_dir / f"{base}_{counter}{ext}"
+                            counter += 1
+
+                        output_path = temp_output_path
+                        final_filename = output_path.name
+
+                        if is_multi_panel:
+                            generate_multi_panel_mockup(str(template_path), str(artwork_path), str(output_path), coords)
+                        else:
+                            generate_mockup(str(template_path), str(artwork_path), str(output_path), coords)
+
+                        st.session_state["generated_outputs"].append((final_filename, str(output_path)))
+                        gc.collect()
+
+                    except Exception as e:
+                        st.session_state["generation_errors"].append(
+                            f"❌ Error generating mockup for {selected_template}: {e}"
+                        )
+
+            if st.session_state["generated_outputs"]:
+                zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
+                zip_path = job_dir / zip_name
+
+                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+                    for filename, file_path in st.session_state["generated_outputs"]:
+                        file_path_obj = Path(file_path)
+                        if file_path_obj.exists():
+                            zipf.write(file_path_obj, arcname=filename)
+
+                st.session_state["zip_path"] = str(zip_path)
+                st.session_state["zip_name"] = zip_name
+                st.session_state["rerun_after_generate"] = True
+                gc.collect()
+                st.rerun()
+
+        finally:
+            generation_artworks.clear()
+            gc.collect()
 
 # ---------------------------
 # Thumbnails + Summary
 # ---------------------------
 if st.session_state["generated_outputs"]:
     cols = st.columns(4)
+
     for i, (filename, path) in enumerate(st.session_state["generated_outputs"]):
         with cols[i % 4]:
-            if os.path.exists(path):
+            path_obj = Path(path)
+            if path_obj.exists():
                 try:
-                    img = Image.open(path)
-                    img.thumbnail((300, 300))
-                    st.image(img, caption=filename, use_container_width=True)
+                    thumb = build_result_thumbnail(path_obj)
+                    st.image(thumb, caption=filename, width="stretch")
+                    thumb.close()
                 except Exception as e:
                     st.error(f"⚠️ Could not load {filename}: {e}")
             else:
                 st.warning(f"⚠️ Missing file: {filename}")
 
-    successful = [f for f, p in st.session_state["generated_outputs"] if os.path.exists(p)]
-    missing = [f for f, p in st.session_state["generated_outputs"] if not os.path.exists(p)]
+    successful = [f for f, p in st.session_state["generated_outputs"] if Path(p).exists()]
+    missing = [f for f, p in st.session_state["generated_outputs"] if not Path(p).exists()]
 
     if successful:
-        st.success(f"✅ {len(successful)} mockup(s) generated successfully.")
+        total_mb = sum(file_size_mb(Path(p)) for _, p in st.session_state["generated_outputs"] if Path(p).exists())
+        st.success(f"✅ {len(successful)} mockup(s) generated successfully. Total output size: {total_mb:.2f} MB")
     if missing:
         st.warning(f"⚠️ {len(missing)} mockup(s) missing or failed to load.")
 
 if "generation_errors" in st.session_state:
     for error in st.session_state["generation_errors"]:
         st.error(error)
+
+# Release preview images created during this run.
+for preview_img in preview_images:
+    with suppress(Exception):
+        preview_img.close()
+
+gc.collect()
