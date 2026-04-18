@@ -370,7 +370,7 @@ div[data-baseweb="menu"] li:hover {
 ----------------------------------- */
 div[data-testid="stFileUploader"] {
     background-color: #F7F7F7 !important;
-    border: 3px dashed #542D54 !important;
+    border: 2px dashed #542D54 !important;
     border-radius: 12px !important;
     box-shadow: none !important;
     padding: 8px !important;
@@ -411,7 +411,7 @@ div[data-testid="stFileUploaderDropzone"] svg * {
    Fix for doubled text: reset pseudo-elements and hide any icon/SVG
    children that may be stacking on top of the label. */
 div[data-testid="stFileUploader"] button[kind="secondary"],
-div[data-testid="stFileUploader"] button {
+div[data-testid="stFileUploader"] button[kind="secondary"] {
     background-color: #D7DF23 !important;
     color: #542D54 !important;
     border: none !important;
@@ -426,12 +426,12 @@ div[data-testid="stFileUploader"] button {
     gap: 6px !important;
 }
 
-div[data-testid="stFileUploader"] button::before {
+div[data-testid="stFileUploader"] button[kind="secondary"]::before {
     content: none !important;
     display: none !important;
 }
 
-div[data-testid="stFileUploader"] button p {
+div[data-testid="stFileUploader"] button[kind="secondary"] p {
     color: #542D54 !important;
     -webkit-text-fill-color: #542D54 !important;
     margin: 0 !important;
@@ -439,18 +439,18 @@ div[data-testid="stFileUploader"] button p {
 }
 
 /* Hide any SVG icon inside the button so it can't overlap the label */
-div[data-testid="stFileUploader"] button svg {
+div[data-testid="stFileUploader"] button[kind="secondary"] svg {
     display: none !important;
 }
 
 /* Streamlit 1.56's upload button renders its label in multiple places
    depending on version/state. Cleanest solution: hide ALL native button
    children and inject a single "Upload" label via ::after. */
-div[data-testid="stFileUploader"] button > * {
+div[data-testid="stFileUploader"] button[kind="secondary"] > * {
     display: none !important;
 }
 
-div[data-testid="stFileUploader"] button::after {
+div[data-testid="stFileUploader"] button[kind="secondary"]::after {
     content: "Upload" !important;
     display: inline !important;
     color: #542D54 !important;
@@ -460,7 +460,7 @@ div[data-testid="stFileUploader"] button::after {
     line-height: 1 !important;
 }
 
-div[data-testid="stFileUploader"] button:hover {
+div[data-testid="stFileUploader"] button[kind="secondary"]:hover {
     background-color: #C8D51E !important;
     border-color: transparent !important;
 }
