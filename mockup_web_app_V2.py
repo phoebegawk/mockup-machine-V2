@@ -654,7 +654,8 @@ div[data-testid="stDialog"] h2 {
    it won't affect the panel's own white background at all. */
 div[data-testid="stDialog"] {
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: safe center !important;
+    overflow-y: auto !important;
     background-color: rgba(0, 0, 0, 0.6) !important;
 }
 </style>

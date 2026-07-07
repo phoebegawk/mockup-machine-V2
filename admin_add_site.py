@@ -70,6 +70,13 @@ except ImportError:
 
 PREVIEW_MAX_EDGE = 1000
 
+# Empirical sweet spot for corner-detection accuracy against the app's
+# compositing resolution — per the click_points.py workflow notes, PNGs
+# outside this range are untested, not necessarily broken. Warn, don't
+# block: this is empirical guidance, not a hard technical requirement.
+TEMPLATE_RECOMMENDED_MIN_MB = 2.0
+TEMPLATE_RECOMMENDED_MAX_MB = 3.0
+
 
 # ---------------------------
 # State management
@@ -177,8 +184,12 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
     _ensure_admin_state(tmp_dir)
 
     if not st.session_state["admin_authenticated"]:
-        _render_password_gate()
-        return
+        just_unlocked = _render_password_gate()
+        if not just_unlocked:
+            return
+        # else: fall through immediately into the rest of this same function
+        # call below, in the same render pass — no rerun, no dependency on
+        # Streamlit keeping a separate dialog invocation open across reruns.
 
     job_dir = Path(st.session_state["admin_job_dir"])
 
@@ -197,6 +208,10 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
     uploaded = st.file_uploader(
         "Template PNG (with transparent billboard window)", type=["png"], key="admin_upload"
     )
+    st.caption(
+        f"Sweet spot: {TEMPLATE_RECOMMENDED_MIN_MB:.0f}–{TEMPLATE_RECOMMENDED_MAX_MB:.0f}MB PNG "
+        f"exports tend to give the most accurate corner detection."
+    )
 
     if uploaded is not None and st.session_state["admin_upload_name"] != uploaded.name:
         st.session_state["admin_upload_bytes"] = uploaded.getvalue()
@@ -210,6 +225,15 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
 
     raw_path = job_dir / f"raw_{st.session_state['admin_upload_name']}"
     raw_path.write_bytes(st.session_state["admin_upload_bytes"])
+
+    size_mb = len(st.session_state["admin_upload_bytes"]) / (1024 * 1024)
+    if size_mb < TEMPLATE_RECOMMENDED_MIN_MB or size_mb > TEMPLATE_RECOMMENDED_MAX_MB:
+        st.warning(
+            f"⚠️ This template is {size_mb:.2f}MB. "
+            f"{TEMPLATE_RECOMMENDED_MIN_MB:.0f}–{TEMPLATE_RECOMMENDED_MAX_MB:.0f}MB PNG exports have "
+            f"been the most reliable for accurate corner detection — outside that range is "
+            f"untested, so double-check the detected corners carefully below before saving."
+        )
 
     resized_path = job_dir / f"resized_{st.session_state['admin_upload_name']}"
     try:
@@ -310,14 +334,20 @@ def _render_admin_errors() -> None:
         st.error(error)
 
 
-def _render_password_gate() -> None:
+def _render_password_gate() -> bool:
     """
     The actual security boundary for this feature. The '+ Add Site' button
     itself stays visible to everyone — hiding a button client-side isn't
     real protection anyway, since nothing prevents inspecting/re-triggering
     it. The real gate is here: no upload/detect/save/GitHub-commit code
-    below this function ever executes without a correct password, checked
+    in the caller ever executes without a correct password, checked
     server-side in Python before anything else in the dialog runs.
+
+    Returns True only on the exact render pass where the correct password
+    was just submitted — the caller uses this to fall through immediately
+    into the rest of the dialog in the SAME call, rather than relying on
+    st.rerun() to reopen a separate dialog invocation (which is what caused
+    the "have to click Add Site again" bug this replaces).
     """
     if not os.environ.get("ADMIN_PASSWORD"):
         st.error(
@@ -326,7 +356,7 @@ def _render_password_gate() -> None:
             "environment variables (and export it locally for local testing) to "
             "enable access."
         )
-        return
+        return False
 
     st.markdown("**This area is password-protected.**")
     entered = st.text_input("Password", type="password", key="admin_password_input")
@@ -334,11 +364,12 @@ def _render_password_gate() -> None:
     if st.button("Unlock", key="admin_password_submit"):
         if _verify_password(entered):
             st.session_state["admin_authenticated"] = True
-            st.rerun()
+            return True
         else:
             st.session_state["admin_errors"].append("❌ Incorrect password.")
 
     _render_admin_errors()
+    return False
 
 
 def _handle_save(site_name: str, quad, working_path: Path, template_dir: Path, job_dir: Path) -> None:
