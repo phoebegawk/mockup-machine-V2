@@ -682,4 +682,13 @@ TEMPLATE_COORDINATES = {
             (243, 449),
         ]
     },
+    "Geelong (Bellarine) (Digital) - 32242-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (1585, 1020),
+            (2475, 1010),
+            (2479, 1250),
+            (1588, 1260),
+        ]
+    },
 }
