@@ -682,15 +682,6 @@ TEMPLATE_COORDINATES = {
             (1588, 1260),
         ]
     },
-    "Yarrawonga (Digital) - 37303-D.png": {
-        "split_ratio": [1.0],
-        "LHS": [
-            (1967, 1428),
-            (2704, 1424),
-            (2704, 1658),
-            (1967, 1654),
-        ]
-    },
     "Orange (Digital) - 28001-D.png": {
         "split_ratio": [1.0],
         "LHS": [
