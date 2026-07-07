@@ -136,6 +136,7 @@ def _reset_admin_state(tmp_dir: Path) -> None:
     st.session_state["admin_upload_name"] = None
     st.session_state["admin_quad"] = None
     st.session_state["admin_working_path"] = None
+    st.session_state["admin_last_click"] = None
     st.session_state["admin_errors"] = []
 
 
@@ -428,7 +429,22 @@ def render_add_site_panel(
 
                 click = streamlit_image_coordinates(preview, key="admin_click")
 
-                if corner_choice != "(none — looks correct)" and click is not None:
+                # streamlit_image_coordinates returns the SAME last-clicked
+                # coordinate on every rerun until a genuinely new click
+                # happens — it doesn't get "consumed" once read. Without
+                # tracking what we've already processed, this reruns in a
+                # loop for as long as a real corner stays selected: process
+                # click -> rerun -> component returns the same click again
+                # -> looks new -> process again -> rerun -> repeat. Only
+                # act when the click actually differs from the last one we
+                # handled.
+                click_signature = (click["x"], click["y"]) if click is not None else None
+                if (
+                    corner_choice != "(none — looks correct)"
+                    and click_signature is not None
+                    and click_signature != st.session_state.get("admin_last_click")
+                ):
+                    st.session_state["admin_last_click"] = click_signature
                     idx = ["TL", "TR", "BR", "BL"].index(corner_choice)
                     new_point = (int(click["x"] / scale), int(click["y"] / scale))
                     quad = list(quad)
