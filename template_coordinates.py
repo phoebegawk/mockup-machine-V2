@@ -163,15 +163,6 @@ TEMPLATE_COORDINATES = {
             (1058, 781)
         ]
     },
-    "Geelong (Digital) Bellarine - 32242-D.png": {
-        "split_ratio": [1.0],
-        "LHS": [
-            (441, 284),
-            (692, 281),
-            (694, 351),
-            (441, 354),
-        ]
-    },
     "Geelong (Digital) Belmont - 32163-D.png": {
         "split_ratio": [1.0],
         "LHS": [
