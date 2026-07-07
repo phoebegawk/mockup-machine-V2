@@ -66,13 +66,6 @@ from template_detect import (
     scale_quad,
 )
 
-try:
-    from streamlit_image_coordinates import streamlit_image_coordinates
-
-    HAS_CLICK_COMPONENT = True
-except ImportError:
-    HAS_CLICK_COMPONENT = False
-
 PREVIEW_MAX_EDGE = 1000
 
 
@@ -292,50 +285,26 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
     quad = st.session_state["admin_quad"]
 
     st.markdown("**Detected billboard window** — corners are TL / TR / BR / BL.")
+    st.caption(
+        "Adjust any corner using the fields below if the detected box needs nudging "
+        "(e.g. clipped by a pole or sign)."
+    )
 
     preview = None
     try:
-        if HAS_CLICK_COMPONENT:
-            corner_choice = st.selectbox(
-                "To fix a corner: select it here, then click its correct position on the image.",
-                ["(none — looks correct)", "TL", "TR", "BR", "BL"],
-                key="admin_adjust_corner_select",
-            )
-            preview = draw_quad_overlay(working_path, quad, max_edge=PREVIEW_MAX_EDGE)
-            full = None
-            try:
-                full = Image.open(working_path)
-                scale = preview.width / full.width
-            finally:
-                if full is not None:
-                    full.close()
+        preview = draw_quad_overlay(working_path, quad, max_edge=PREVIEW_MAX_EDGE)
+        st.image(preview)
 
-            click = streamlit_image_coordinates(preview, key="admin_click")
-
-            if corner_choice != "(none — looks correct)" and click is not None:
-                idx = ["TL", "TR", "BR", "BL"].index(corner_choice)
-                new_point = (int(click["x"] / scale), int(click["y"] / scale))
-                quad = list(quad)
-                quad[idx] = new_point
-                st.session_state["admin_quad"] = quad
-                st.rerun()
-        else:
-            preview = draw_quad_overlay(working_path, quad, max_edge=PREVIEW_MAX_EDGE)
-            st.image(preview)
-            st.caption(
-                "Install `streamlit-image-coordinates` (see requirements.txt) to enable "
-                "click-to-adjust. Manual overrides for now:"
-            )
-            cols = st.columns(4)
-            labels = ["TL", "TR", "BR", "BL"]
-            new_quad = []
-            for i, label in enumerate(labels):
-                with cols[i]:
-                    x = st.number_input(f"{label} x", value=quad[i][0], key=f"admin_{label}_x")
-                    y = st.number_input(f"{label} y", value=quad[i][1], key=f"admin_{label}_y")
-                    new_quad.append((int(x), int(y)))
-            st.session_state["admin_quad"] = new_quad
-            quad = new_quad
+        cols = st.columns(4)
+        labels = ["TL", "TR", "BR", "BL"]
+        new_quad = []
+        for i, label in enumerate(labels):
+            with cols[i]:
+                x = st.number_input(f"{label} x", value=quad[i][0], key=f"admin_{label}_x")
+                y = st.number_input(f"{label} y", value=quad[i][1], key=f"admin_{label}_y")
+                new_quad.append((int(x), int(y)))
+        st.session_state["admin_quad"] = new_quad
+        quad = new_quad
     finally:
         if preview is not None:
             preview.close()

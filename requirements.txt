@@ -3,4 +3,3 @@ numpy
 pillow
 streamlit
 requests
-streamlit-image-coordinates
