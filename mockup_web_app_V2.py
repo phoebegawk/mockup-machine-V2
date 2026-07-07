@@ -655,8 +655,20 @@ div[data-testid="stDialog"] h2 {
 div[data-testid="stDialog"] {
     align-items: center !important;
     justify-content: safe center !important;
-    overflow-y: auto !important;
     background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* The actual scroll fix: confirmed via DOM inspection that the outer
+   div[data-testid="stDialog"] is a fixed, viewport-sized wrapper
+   (957x810, matching the browser viewport exactly) that only centers its
+   child — it was never the thing that needed to scroll, which is why
+   overflow-y:auto on it alone didn't fix anything. The actual visible
+   white panel is the nested <section role="dialog"> below it, and THAT
+   element's content (title + image + form) is what exceeds the available
+   height. Scroll needs to apply there instead. */
+div[data-testid="stDialog"] section[role="dialog"] {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -705,7 +717,7 @@ main_card.markdown(
 # Template Selection
 # ---------------------------
 all_coordinates = {**TEMPLATE_COORDINATES, **st.session_state.get("custom_templates", {})}
-template_keys = list(all_coordinates.keys())
+template_keys = sorted(all_coordinates.keys(), key=str.lower)
 template_display_names = [name.replace(".png", "") for name in template_keys]
 
 with main_card:
@@ -839,87 +851,88 @@ if generate_clicked:
     elif not client_name or not live_date:
         st.session_state["generation_errors"].append("Please enter client name and live date.")
     else:
-        job_id = uuid.uuid4().hex
-        job_dir = TMP_DIR / f"job_{job_id}"
-        job_upload_dir = job_dir / "uploaded_artwork"
-        job_output_dir = job_dir / "generated_mockups"
-        job_upload_dir.mkdir(parents=True, exist_ok=True)
-        job_output_dir.mkdir(parents=True, exist_ok=True)
-        st.session_state["active_job_dir"] = str(job_dir)
+        with st.spinner("Generating mockups…"):
+            job_id = uuid.uuid4().hex
+            job_dir = TMP_DIR / f"job_{job_id}"
+            job_upload_dir = job_dir / "uploaded_artwork"
+            job_output_dir = job_dir / "generated_mockups"
+            job_upload_dir.mkdir(parents=True, exist_ok=True)
+            job_output_dir.mkdir(parents=True, exist_ok=True)
+            st.session_state["active_job_dir"] = str(job_dir)
 
-        generation_artworks = []
-        try:
-            for artwork_file in artwork_files:
-                try:
-                    generation_artworks.append(prepare_artwork_file(artwork_file, job_upload_dir))
-                except Exception as e:
-                    st.session_state["generation_errors"].append(f"❌ Error processing {artwork_file.name}: {e}")
-
-            for selected_template in selected_templates:
-                template_path = TEMPLATE_DIR / "Digital" / selected_template
-
-                template_data = all_coordinates.get(selected_template)
-                if not template_data:
-                    st.session_state["generation_errors"].append(f"Coordinates not found for {selected_template}.")
-                    continue
-
-                panel_keys = [k for k in ("LHS", "MID", "RHS") if k in template_data]
-                is_multi_panel = "split_ratios" in template_data and len(panel_keys) >= 2
-                coords = template_data if is_multi_panel else template_data["LHS"]
-
-                for artwork_meta in generation_artworks:
+            generation_artworks = []
+            try:
+                for artwork_file in artwork_files:
                     try:
-                        artwork_path = artwork_meta["saved_path"]
-                        filename_no_ext = artwork_meta["base_name"]
-                        parts = filename_no_ext.split(" - ")
-                        campaign_name = parts[1].strip() if len(parts) >= 3 else parts[-1].strip()
-
-                        final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
-                        output_path = job_output_dir / final_filename
-
-                        base = output_path.stem
-                        ext = output_path.suffix
-                        counter = 1
-                        temp_output_path = output_path
-                        while temp_output_path.exists():
-                            temp_output_path = job_output_dir / f"{base}_{counter}{ext}"
-                            counter += 1
-
-                        output_path = temp_output_path
-                        final_filename = output_path.name
-
-                        if is_multi_panel:
-                            generate_multi_panel_mockup(str(template_path), str(artwork_path), str(output_path), coords)
-                        else:
-                            generate_mockup(str(template_path), str(artwork_path), str(output_path), coords)
-
-                        st.session_state["generated_outputs"].append((final_filename, str(output_path)))
-                        gc.collect()
-
+                        generation_artworks.append(prepare_artwork_file(artwork_file, job_upload_dir))
                     except Exception as e:
-                        st.session_state["generation_errors"].append(
-                            f"❌ Error generating mockup for {selected_template}: {e}"
-                        )
+                        st.session_state["generation_errors"].append(f"❌ Error processing {artwork_file.name}: {e}")
 
-            if st.session_state["generated_outputs"]:
-                zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
-                zip_path = job_dir / zip_name
+                for selected_template in selected_templates:
+                    template_path = TEMPLATE_DIR / "Digital" / selected_template
 
-                with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                    for filename, file_path in st.session_state["generated_outputs"]:
-                        file_path_obj = Path(file_path)
-                        if file_path_obj.exists():
-                            zipf.write(file_path_obj, arcname=filename)
+                    template_data = all_coordinates.get(selected_template)
+                    if not template_data:
+                        st.session_state["generation_errors"].append(f"Coordinates not found for {selected_template}.")
+                        continue
 
-                st.session_state["zip_path"] = str(zip_path)
-                st.session_state["zip_name"] = zip_name
-                st.session_state["rerun_after_generate"] = True
+                    panel_keys = [k for k in ("LHS", "MID", "RHS") if k in template_data]
+                    is_multi_panel = "split_ratios" in template_data and len(panel_keys) >= 2
+                    coords = template_data if is_multi_panel else template_data["LHS"]
+
+                    for artwork_meta in generation_artworks:
+                        try:
+                            artwork_path = artwork_meta["saved_path"]
+                            filename_no_ext = artwork_meta["base_name"]
+                            parts = filename_no_ext.split(" - ")
+                            campaign_name = parts[1].strip() if len(parts) >= 3 else parts[-1].strip()
+
+                            final_filename = generate_filename(selected_template, client_name, campaign_name, live_date)
+                            output_path = job_output_dir / final_filename
+
+                            base = output_path.stem
+                            ext = output_path.suffix
+                            counter = 1
+                            temp_output_path = output_path
+                            while temp_output_path.exists():
+                                temp_output_path = job_output_dir / f"{base}_{counter}{ext}"
+                                counter += 1
+
+                            output_path = temp_output_path
+                            final_filename = output_path.name
+
+                            if is_multi_panel:
+                                generate_multi_panel_mockup(str(template_path), str(artwork_path), str(output_path), coords)
+                            else:
+                                generate_mockup(str(template_path), str(artwork_path), str(output_path), coords)
+
+                            st.session_state["generated_outputs"].append((final_filename, str(output_path)))
+                            gc.collect()
+
+                        except Exception as e:
+                            st.session_state["generation_errors"].append(
+                                f"❌ Error generating mockup for {selected_template}: {e}"
+                            )
+
+                if st.session_state["generated_outputs"]:
+                    zip_name = f"Mock_Ups_{client_name}_{live_date}.zip"
+                    zip_path = job_dir / zip_name
+
+                    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+                        for filename, file_path in st.session_state["generated_outputs"]:
+                            file_path_obj = Path(file_path)
+                            if file_path_obj.exists():
+                                zipf.write(file_path_obj, arcname=filename)
+
+                    st.session_state["zip_path"] = str(zip_path)
+                    st.session_state["zip_name"] = zip_name
+                    st.session_state["rerun_after_generate"] = True
+                    gc.collect()
+                    st.rerun()
+
+            finally:
+                generation_artworks.clear()
                 gc.collect()
-                st.rerun()
-
-        finally:
-            generation_artworks.clear()
-            gc.collect()
 
 # ---------------------------
 # Thumbnails + Summary

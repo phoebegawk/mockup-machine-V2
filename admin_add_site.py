@@ -237,55 +237,56 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
         return
 
     if st.session_state["admin_quad"] is None:
-        try:
-            detected_quad = detect_transparent_quad(safety_capped_path)
-        except ValueError as e:
-            st.session_state["admin_errors"].append(
-                f"❌ {e} If this site has more than one transparent window (multi-panel), "
-                "this tool can't handle it yet — use click_points.py instead."
-            )
-            _render_admin_errors()
-            return
-
-        # Silent, quality-aware resize — never surfaced to the admin. Shrinks
-        # the template (and scales its detected quad to match) down to what
-        # this specific photo's own framing geometry actually needs for a
-        # crisp result, calibrated against a real confirmed test. Never
-        # upscales: if the source can't reach the target even at full
-        # resolution, it's left as-is rather than faking quality.
-        img = None
-        try:
-            img = Image.open(safety_capped_path)
-            native_w, native_h = img.size
-        finally:
-            if img is not None:
-                img.close()
-
-        quad_h = max(p[1] for p in detected_quad) - min(p[1] for p in detected_quad)
-        ideal_h = compute_ideal_template_height(native_h, quad_h)
-
-        if ideal_h < native_h:
-            scale = ideal_h / native_h
-            final_path = job_dir / f"final_{st.session_state['admin_upload_name']}"
-            src_img = None
-            resized_img = None
+        with st.spinner("Detecting billboard window…"):
             try:
-                src_img = Image.open(safety_capped_path)
-                new_size = (round(native_w * scale), round(native_h * scale))
-                resized_img = src_img.resize(new_size, Image.LANCZOS)
-                resized_img.convert("RGBA").save(final_path, "PNG", optimize=True)
-            finally:
-                if resized_img is not None:
-                    resized_img.close()
-                if src_img is not None:
-                    src_img.close()
-                gc.collect()
+                detected_quad = detect_transparent_quad(safety_capped_path)
+            except ValueError as e:
+                st.session_state["admin_errors"].append(
+                    f"❌ {e} If this site has more than one transparent window (multi-panel), "
+                    "this tool can't handle it yet — use click_points.py instead."
+                )
+                _render_admin_errors()
+                return
 
-            st.session_state["admin_working_path"] = str(final_path)
-            st.session_state["admin_quad"] = scale_quad(detected_quad, scale)
-        else:
-            st.session_state["admin_working_path"] = str(safety_capped_path)
-            st.session_state["admin_quad"] = detected_quad
+            # Silent, quality-aware resize — never surfaced to the admin. Shrinks
+            # the template (and scales its detected quad to match) down to what
+            # this specific photo's own framing geometry actually needs for a
+            # crisp result, calibrated against a real confirmed test. Never
+            # upscales: if the source can't reach the target even at full
+            # resolution, it's left as-is rather than faking quality.
+            img = None
+            try:
+                img = Image.open(safety_capped_path)
+                native_w, native_h = img.size
+            finally:
+                if img is not None:
+                    img.close()
+
+            quad_h = max(p[1] for p in detected_quad) - min(p[1] for p in detected_quad)
+            ideal_h = compute_ideal_template_height(native_h, quad_h)
+
+            if ideal_h < native_h:
+                scale = ideal_h / native_h
+                final_path = job_dir / f"final_{st.session_state['admin_upload_name']}"
+                src_img = None
+                resized_img = None
+                try:
+                    src_img = Image.open(safety_capped_path)
+                    new_size = (round(native_w * scale), round(native_h * scale))
+                    resized_img = src_img.resize(new_size, Image.LANCZOS)
+                    resized_img.convert("RGBA").save(final_path, "PNG", optimize=True)
+                finally:
+                    if resized_img is not None:
+                        resized_img.close()
+                    if src_img is not None:
+                        src_img.close()
+                    gc.collect()
+
+                st.session_state["admin_working_path"] = str(final_path)
+                st.session_state["admin_quad"] = scale_quad(detected_quad, scale)
+            else:
+                st.session_state["admin_working_path"] = str(safety_capped_path)
+                st.session_state["admin_quad"] = detected_quad
 
     working_path = Path(st.session_state["admin_working_path"])
     quad = st.session_state["admin_quad"]
