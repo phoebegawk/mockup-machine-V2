@@ -640,7 +640,7 @@ div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-pan
     background: #FFFFFF !important;
     border-radius: 12px !important;
     border: 3px solid #BD8DD2 !important;
-    padding: 24px 32px !important;
+    padding: 8px 32px 24px 32px !important;
     margin: 0 auto 24px auto !important;
     color: #542D54 !important;
 }
@@ -663,13 +663,20 @@ div[data-testid="stHorizontalBlock"]:has(.gawk-closebtn-anchor) {
 }
 
 div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-closebtn-anchor) .stButton > button {
-    background-color: #BD8DD2 !important;
-    color: #542D54 !important;
-    padding: 6px 16px !important;
-    border-radius: 8px !important;
+    background-color: transparent !important;
+    color: #888888 !important;
+    padding: 4px 8px !important;
+    border: none !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
     margin: 0 !important;
     white-space: nowrap !important;
+    font-weight: 600 !important;
+}
+
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-closebtn-anchor) .stButton > button:hover {
+    background-color: transparent !important;
+    color: #542D54 !important;
 }
 </style>
 """, unsafe_allow_html=True)
