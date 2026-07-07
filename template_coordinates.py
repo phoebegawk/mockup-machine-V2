@@ -682,4 +682,13 @@ TEMPLATE_COORDINATES = {
             (584, 427),
         ]
     },
+    "Mildura (Digital) - 35007-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (243, 330),
+            (642, 330),
+            (642, 449),
+            (243, 449),
+        ]
+    },
 }
