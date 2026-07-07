@@ -754,4 +754,13 @@ TEMPLATE_COORDINATES = {
             (764, 1109),
         ]
     },
+    "Nowra South (Digital) - 25411-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (1275, 899),
+            (2172, 882),
+            (2173, 1120),
+            (1277, 1132),
+        ]
+    },
 }
