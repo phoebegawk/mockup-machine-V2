@@ -251,6 +251,7 @@ def render_add_site_trigger(
             st.rerun()
 
 
+@st.fragment
 def render_add_site_panel(
     template_dir: Path,
     tmp_dir: Path,
@@ -274,6 +275,7 @@ def render_add_site_panel(
         with header_col:
             st.markdown("### Add New Site (single-panel)")
         with close_col:
+            close_col.markdown('<span class="gawk-closebtn-anchor"></span>', unsafe_allow_html=True)
             if st.button("✕ Close", key="close_add_site_panel"):
                 st.session_state["show_add_site"] = False
                 st.rerun()
@@ -405,8 +407,10 @@ def render_add_site_panel(
                     quad = list(quad)
                     quad[idx] = new_point
                     st.session_state["admin_quad"] = quad
-                    # Safe here (unlike inside st.dialog): this is a plain
-                    # page rerun with no dialog-open-state to lose.
+                    # Safe here (unlike inside st.dialog): render_add_site_panel
+                    # is @st.fragment-decorated, so this only reruns the panel
+                    # itself, not the whole page — no dialog-open-state to
+                    # lose, and no full-page fade/flash on every corner click.
                     st.rerun()
             else:
                 st.caption(

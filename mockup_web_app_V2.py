@@ -651,6 +651,26 @@ div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-pan
 div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-panel-anchor) h3 {
     color: #542D54 !important;
 }
+
+.gawk-closebtn-anchor {
+    display: none !important;
+}
+
+/* Vertically align the Close button with the heading beside it — they sit
+   in the same row of columns, which top-align by default. */
+div[data-testid="stHorizontalBlock"]:has(.gawk-closebtn-anchor) {
+    align-items: center !important;
+}
+
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-closebtn-anchor) .stButton > button {
+    background-color: #BD8DD2 !important;
+    color: #542D54 !important;
+    padding: 6px 16px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
