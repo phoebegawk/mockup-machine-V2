@@ -718,4 +718,13 @@ TEMPLATE_COORDINATES = {
             (1860, 1536),
         ]
     },
+    "Grantville (Digital) - 39842-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (790, 354),
+            (1589, 354),
+            (1589, 604),
+            (787, 602),
+        ]
+    },
 }
