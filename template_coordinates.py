@@ -745,4 +745,13 @@ TEMPLATE_COORDINATES = {
             (1254, 946),
         ]
     },
+    "Broken Hill (Digital) - 28801-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (768, 873),
+            (1528, 905),
+            (1538, 1123),
+            (764, 1109),
+        ]
+    },
 }
