@@ -11,6 +11,7 @@ import streamlit as st
 
 from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
 from template_coordinates import TEMPLATE_COORDINATES
+from admin_add_site import render_add_site_trigger
 
 # --- Artwork Safety Limits ---
 MAX_EDGE = 8000            # max width/height in pixels
@@ -161,9 +162,16 @@ st.set_page_config(
 HEADER_PATH = BASE_DIR / "assets" / "Header-MockUpMachine.png"
 
 if HEADER_PATH.exists():
-    st.image(str(HEADER_PATH), use_container_width=True)
+    st.image(str(HEADER_PATH), width="stretch")
 else:
     st.warning(f"Header image not found: {HEADER_PATH}")
+
+render_add_site_trigger(
+    template_dir=TEMPLATE_DIR / "Digital",
+    tmp_dir=TMP_DIR,
+    max_edge=MAX_EDGE,
+    max_pixels=MAX_PIXELS,
+)
 
 # ---------------------------
 # Style Block (CLEAN + FINAL)
@@ -579,6 +587,76 @@ div[data-baseweb="select"]:focus-within > div {
 div[data-testid="stImage"] img {
     border-radius: 0 !important;
 }
+
+/* -----------------------------------
+   ADD SITE BUTTON
+   Sentinel-based, same trick as the
+   white card. Pulled out of normal
+   page flow and fixed to the bottom-
+   right corner as a rounded rectangle
+   instead of the default pill shape.
+----------------------------------- */
+.gawk-addsite-anchor {
+    display: none !important;
+}
+
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-anchor) {
+    position: fixed !important;
+    bottom: 32px !important;
+    right: 32px !important;
+    z-index: 9999 !important;
+    width: auto !important;
+}
+
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-anchor) .stButton > button {
+    border-radius: 12px !important;
+    padding: 8px 16px !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    background-color: #BD8DD2 !important;
+    color: #542D54 !important;
+}
+
+/* -----------------------------------
+   ADD SITE DIALOG
+   st.dialog renders in its own white
+   modal outside the card's DOM subtree,
+   so the global white label color (meant
+   for the purple page background) needs
+   the same purple override the card gets.
+----------------------------------- */
+div[data-testid="stDialog"] label,
+div[data-testid="stDialog"] div[data-testid="stWidgetLabel"],
+div[data-testid="stDialog"] div[data-testid="stWidgetLabel"] p {
+    color: #542D54 !important;
+}
+
+/* Dialog title (<h2 slot="title">) — confirmed via DevTools inspection as
+   a separate element the label-only rule above never touched. */
+div[data-testid="stDialog"] h2 {
+    color: #542D54 !important;
+}
+
+/* Confirmed via DevTools inspection (not a guess this time):
+   div[data-testid="stDialog"] is the OUTER container — already
+   display:flex, already spans the full viewport (--page-width/
+   --page-height custom props), already handles its own scrolling.
+   The actual visible white panel is a separate nested element,
+   <section role="dialog">, further inside.
+
+   Previous attempt fought this element's own layout by forcing
+   position:fixed + transform, which is almost certainly what broke
+   sizing and cut off content. Correct fix: use its EXISTING flex
+   display to center the child (align-items/justify-content, not
+   position hacks), and darken it directly here — since this element
+   sits behind the white section panel, not on top of it, darkening
+   it won't affect the panel's own white background at all. */
+div[data-testid="stDialog"] {
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -625,7 +703,8 @@ main_card.markdown(
 # ---------------------------
 # Template Selection
 # ---------------------------
-template_keys = list(TEMPLATE_COORDINATES.keys())
+all_coordinates = {**TEMPLATE_COORDINATES, **st.session_state.get("custom_templates", {})}
+template_keys = list(all_coordinates.keys())
 template_display_names = [name.replace(".png", "") for name in template_keys]
 
 with main_card:
@@ -778,7 +857,7 @@ if generate_clicked:
             for selected_template in selected_templates:
                 template_path = TEMPLATE_DIR / "Digital" / selected_template
 
-                template_data = TEMPLATE_COORDINATES.get(selected_template)
+                template_data = all_coordinates.get(selected_template)
                 if not template_data:
                     st.session_state["generation_errors"].append(f"Coordinates not found for {selected_template}.")
                     continue
