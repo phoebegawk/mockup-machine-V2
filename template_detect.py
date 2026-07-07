@@ -134,3 +134,50 @@ def draw_quad_overlay(image_path: Path, quad: List[Point], max_edge: int = 1000)
 
     gc.collect()
     return preview
+
+
+# --- Quality-aware template sizing ---
+#
+# Calibrated against a real test batch, not a theoretical guess: 8 live
+# templates were composited with the same text-dense artwork and visually
+# judged. Billboard-face pixel heights of 73/99/119px all looked visibly
+# soft; 142/195/207/253/288px all looked fine. The cliff sits somewhere in
+# the 119-142px gap. FACE_HEIGHT_TARGET_PX below is set with a margin above
+# that cliff, not exactly at it, since only one confirmed-good data point
+# (142px) is that close to the boundary.
+FACE_HEIGHT_TARGET_PX = 250
+
+# Floor on the OVERALL template height, independent of the face-height
+# math above — protects the final mockup's resolution as a client-facing
+# deliverable in its own right, since the app composites directly onto
+# the template's native resolution with no separate output upscale step.
+# Grounded in the low end of templates already confirmed fine in
+# production use (Traralgon tested fine at 923px height); rounded up for
+# a margin rather than sitting exactly at that observed floor.
+MIN_TEMPLATE_HEIGHT_PX = 1200
+
+
+def compute_ideal_template_height(image_height: int, quad_height: int) -> int:
+    """
+    Given a detected billboard face's pixel height within a template image
+    of the given height, returns the ideal TEMPLATE height that would
+    deliver FACE_HEIGHT_TARGET_PX of billboard-face resolution — while
+    never recommending below MIN_TEMPLATE_HEIGHT_PX, which protects the
+    overall mockup's quality regardless of what the face-legibility math
+    alone would allow.
+
+    Callers should never upscale to reach this value — if the source is
+    already smaller, leave it as-is rather than fake quality with upscaling.
+    """
+    if quad_height <= 0 or image_height <= 0:
+        raise ValueError("image_height and quad_height must both be positive")
+
+    ratio = quad_height / image_height
+    ideal_for_face = FACE_HEIGHT_TARGET_PX / ratio
+    return max(round(ideal_for_face), MIN_TEMPLATE_HEIGHT_PX)
+
+
+def scale_quad(quad: List[Point], scale: float) -> List[Point]:
+    """Scales a quad's coordinates by the given factor, rounding to ints."""
+    return [(round(x * scale), round(y * scale)) for x, y in quad]
+

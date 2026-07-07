@@ -59,7 +59,12 @@ import streamlit as st
 from PIL import Image
 
 import github_sync
-from template_detect import detect_transparent_quad, draw_quad_overlay
+from template_detect import (
+    compute_ideal_template_height,
+    detect_transparent_quad,
+    draw_quad_overlay,
+    scale_quad,
+)
 
 try:
     from streamlit_image_coordinates import streamlit_image_coordinates
@@ -69,13 +74,6 @@ except ImportError:
     HAS_CLICK_COMPONENT = False
 
 PREVIEW_MAX_EDGE = 1000
-
-# Empirical sweet spot for corner-detection accuracy against the app's
-# compositing resolution — per the click_points.py workflow notes, PNGs
-# outside this range are untested, not necessarily broken. Warn, don't
-# block: this is empirical guidance, not a hard technical requirement.
-TEMPLATE_RECOMMENDED_MIN_MB = 2.0
-TEMPLATE_RECOMMENDED_MAX_MB = 3.0
 
 
 # ---------------------------
@@ -100,6 +98,7 @@ def _reset_admin_state(tmp_dir: Path) -> None:
     st.session_state["admin_upload_bytes"] = None
     st.session_state["admin_upload_name"] = None
     st.session_state["admin_quad"] = None
+    st.session_state["admin_working_path"] = None
     st.session_state["admin_errors"] = []
 
 
@@ -109,6 +108,7 @@ def _ensure_admin_state(tmp_dir: Path) -> None:
     st.session_state.setdefault("custom_templates", {})
     st.session_state.setdefault("admin_errors", [])
     st.session_state.setdefault("admin_authenticated", False)
+    st.session_state.setdefault("admin_working_path", None)
 
 
 def _verify_password(entered: str) -> bool:
@@ -184,12 +184,17 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
     _ensure_admin_state(tmp_dir)
 
     if not st.session_state["admin_authenticated"]:
-        just_unlocked = _render_password_gate()
+        gate_placeholder = st.empty()
+        with gate_placeholder.container():
+            just_unlocked = _render_password_gate()
         if not just_unlocked:
             return
-        # else: fall through immediately into the rest of this same function
-        # call below, in the same render pass — no rerun, no dependency on
-        # Streamlit keeping a separate dialog invocation open across reruns.
+        # Clear the password UI immediately — same render pass, no rerun.
+        # Without this, the password prompt (already drawn to the page by
+        # the time we know it succeeded) would stay stacked above the form
+        # that renders next, since Streamlit can't "un-render" elements
+        # that already executed earlier in the same script run.
+        gate_placeholder.empty()
 
     job_dir = Path(st.session_state["admin_job_dir"])
 
@@ -208,15 +213,12 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
     uploaded = st.file_uploader(
         "Template PNG (with transparent billboard window)", type=["png"], key="admin_upload"
     )
-    st.caption(
-        f"Sweet spot: {TEMPLATE_RECOMMENDED_MIN_MB:.0f}–{TEMPLATE_RECOMMENDED_MAX_MB:.0f}MB PNG "
-        f"exports tend to give the most accurate corner detection."
-    )
 
     if uploaded is not None and st.session_state["admin_upload_name"] != uploaded.name:
         st.session_state["admin_upload_bytes"] = uploaded.getvalue()
         st.session_state["admin_upload_name"] = uploaded.name
         st.session_state["admin_quad"] = None
+        st.session_state["admin_working_path"] = None
 
     if not st.session_state["admin_upload_bytes"]:
         st.caption("Upload a template to auto-detect the billboard window.")
@@ -226,25 +228,9 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
     raw_path = job_dir / f"raw_{st.session_state['admin_upload_name']}"
     raw_path.write_bytes(st.session_state["admin_upload_bytes"])
 
-    size_mb = len(st.session_state["admin_upload_bytes"]) / (1024 * 1024)
-    if size_mb < TEMPLATE_RECOMMENDED_MIN_MB or size_mb > TEMPLATE_RECOMMENDED_MAX_MB:
-        st.warning(
-            f"⚠️ This template is {size_mb:.2f}MB. "
-            f"{TEMPLATE_RECOMMENDED_MIN_MB:.0f}–{TEMPLATE_RECOMMENDED_MAX_MB:.0f}MB PNG exports have "
-            f"been the most reliable for accurate corner detection — outside that range is "
-            f"untested, so double-check the detected corners carefully below before saving."
-        )
-
     resized_path = job_dir / f"resized_{st.session_state['admin_upload_name']}"
     try:
-        working_path = _resize_if_oversized(raw_path, resized_path, max_edge, max_pixels)
-        if working_path != raw_path:
-            st.session_state["admin_upload_bytes"] = working_path.read_bytes()
-            st.warning(
-                f"⚠️ Uploaded template exceeded safety limits and was resized losslessly "
-                f"to stay under {max_edge}px / {max_pixels / 1_000_000:.0f}MP, matching the "
-                f"same limits applied to artwork uploads."
-            )
+        safety_capped_path = _resize_if_oversized(raw_path, resized_path, max_edge, max_pixels)
     except Exception as e:
         st.session_state["admin_errors"].append(f"❌ Could not process uploaded template: {e}")
         _render_admin_errors()
@@ -252,7 +238,7 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
 
     if st.session_state["admin_quad"] is None:
         try:
-            st.session_state["admin_quad"] = detect_transparent_quad(working_path)
+            detected_quad = detect_transparent_quad(safety_capped_path)
         except ValueError as e:
             st.session_state["admin_errors"].append(
                 f"❌ {e} If this site has more than one transparent window (multi-panel), "
@@ -261,6 +247,47 @@ def _add_site_dialog(template_dir: Path, tmp_dir: Path, max_edge: int, max_pixel
             _render_admin_errors()
             return
 
+        # Silent, quality-aware resize — never surfaced to the admin. Shrinks
+        # the template (and scales its detected quad to match) down to what
+        # this specific photo's own framing geometry actually needs for a
+        # crisp result, calibrated against a real confirmed test. Never
+        # upscales: if the source can't reach the target even at full
+        # resolution, it's left as-is rather than faking quality.
+        img = None
+        try:
+            img = Image.open(safety_capped_path)
+            native_w, native_h = img.size
+        finally:
+            if img is not None:
+                img.close()
+
+        quad_h = max(p[1] for p in detected_quad) - min(p[1] for p in detected_quad)
+        ideal_h = compute_ideal_template_height(native_h, quad_h)
+
+        if ideal_h < native_h:
+            scale = ideal_h / native_h
+            final_path = job_dir / f"final_{st.session_state['admin_upload_name']}"
+            src_img = None
+            resized_img = None
+            try:
+                src_img = Image.open(safety_capped_path)
+                new_size = (round(native_w * scale), round(native_h * scale))
+                resized_img = src_img.resize(new_size, Image.LANCZOS)
+                resized_img.convert("RGBA").save(final_path, "PNG", optimize=True)
+            finally:
+                if resized_img is not None:
+                    resized_img.close()
+                if src_img is not None:
+                    src_img.close()
+                gc.collect()
+
+            st.session_state["admin_working_path"] = str(final_path)
+            st.session_state["admin_quad"] = scale_quad(detected_quad, scale)
+        else:
+            st.session_state["admin_working_path"] = str(safety_capped_path)
+            st.session_state["admin_quad"] = detected_quad
+
+    working_path = Path(st.session_state["admin_working_path"])
     quad = st.session_state["admin_quad"]
 
     st.markdown("**Detected billboard window** — corners are TL / TR / BR / BL.")
@@ -375,6 +402,13 @@ def _render_password_gate() -> bool:
 def _handle_save(site_name: str, quad, working_path: Path, template_dir: Path, job_dir: Path) -> None:
     if not site_name.strip():
         st.session_state["admin_errors"].append("Please enter a site filename.")
+        return
+
+    if (template_dir / site_name).exists():
+        st.session_state["admin_errors"].append(
+            f"❌ '{site_name}' already exists in Templates/Digital/. Choose a different "
+            f"filename, or delete/rename the existing template first if you meant to replace it."
+        )
         return
 
     png_bytes = working_path.read_bytes()
