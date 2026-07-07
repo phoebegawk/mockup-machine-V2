@@ -11,7 +11,7 @@ import streamlit as st
 
 from mockup_utils_V2 import generate_mockup, generate_filename, generate_multi_panel_mockup
 from template_coordinates import TEMPLATE_COORDINATES
-from admin_add_site import render_add_site_trigger
+from admin_add_site import render_add_site_trigger, render_add_site_panel
 
 # --- Artwork Safety Limits ---
 MAX_EDGE = 8000            # max width/height in pixels
@@ -167,6 +167,12 @@ else:
     st.warning(f"Header image not found: {HEADER_PATH}")
 
 render_add_site_trigger(
+    template_dir=TEMPLATE_DIR / "Digital",
+    tmp_dir=TMP_DIR,
+    max_edge=MAX_EDGE,
+    max_pixels=MAX_PIXELS,
+)
+render_add_site_panel(
     template_dir=TEMPLATE_DIR / "Digital",
     tmp_dir=TMP_DIR,
     max_edge=MAX_EDGE,
@@ -619,56 +625,31 @@ div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-anc
 }
 
 /* -----------------------------------
-   ADD SITE DIALOG
-   st.dialog renders in its own white
-   modal outside the card's DOM subtree,
-   so the global white label color (meant
-   for the purple page background) needs
-   the same purple override the card gets.
+   ADD SITE PANEL
+   No longer an st.dialog (see admin_add_site.py's module docstring for
+   why — click-based corner adjustment reliably closed the dialog on
+   every interaction). This is now a plain sentinel-anchored card, same
+   trick as the main white card, styled to stand out from the page while
+   living in normal page flow rather than a modal overlay.
 ----------------------------------- */
-div[data-testid="stDialog"] label,
-div[data-testid="stDialog"] div[data-testid="stWidgetLabel"],
-div[data-testid="stDialog"] div[data-testid="stWidgetLabel"] p {
+.gawk-addsite-panel-anchor {
+    display: none !important;
+}
+
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-panel-anchor) {
+    background: #FFFFFF !important;
+    border-radius: 12px !important;
+    border: 3px solid #BD8DD2 !important;
+    padding: 24px 32px !important;
+    margin: 0 auto 24px auto !important;
     color: #542D54 !important;
 }
 
-/* Dialog title (<h2 slot="title">) — confirmed via DevTools inspection as
-   a separate element the label-only rule above never touched. */
-div[data-testid="stDialog"] h2 {
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-panel-anchor) label,
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-panel-anchor) div[data-testid="stWidgetLabel"],
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-panel-anchor) div[data-testid="stWidgetLabel"] p,
+div[data-testid="stVerticalBlock"]:has(> div.element-container .gawk-addsite-panel-anchor) h3 {
     color: #542D54 !important;
-}
-
-/* Confirmed via DevTools inspection (not a guess this time):
-   div[data-testid="stDialog"] is the OUTER container — already
-   display:flex, already spans the full viewport (--page-width/
-   --page-height custom props), already handles its own scrolling.
-   The actual visible white panel is a separate nested element,
-   <section role="dialog">, further inside.
-
-   Previous attempt fought this element's own layout by forcing
-   position:fixed + transform, which is almost certainly what broke
-   sizing and cut off content. Correct fix: use its EXISTING flex
-   display to center the child (align-items/justify-content, not
-   position hacks), and darken it directly here — since this element
-   sits behind the white section panel, not on top of it, darkening
-   it won't affect the panel's own white background at all. */
-div[data-testid="stDialog"] {
-    align-items: center !important;
-    justify-content: safe center !important;
-    background-color: rgba(0, 0, 0, 0.6) !important;
-}
-
-/* The actual scroll fix: confirmed via DOM inspection that the outer
-   div[data-testid="stDialog"] is a fixed, viewport-sized wrapper
-   (957x810, matching the browser viewport exactly) that only centers its
-   child — it was never the thing that needed to scroll, which is why
-   overflow-y:auto on it alone didn't fix anything. The actual visible
-   white panel is the nested <section role="dialog"> below it, and THAT
-   element's content (title + image + form) is what exceeds the available
-   height. Scroll needs to apply there instead. */
-div[data-testid="stDialog"] section[role="dialog"] {
-    max-height: 90vh !important;
-    overflow-y: auto !important;
 }
 </style>
 """, unsafe_allow_html=True)
