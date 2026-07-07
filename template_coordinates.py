@@ -664,15 +664,6 @@ TEMPLATE_COORDINATES = {
             (791, 630),
         ]
     },
-    "Yarrawonga (Digital) - 37303-D.png": {
-        "split_ratio": [1.0],
-        "LHS": [
-            (585, 328), 
-            (888, 328),
-            (888, 427),
-            (584, 427),
-        ]
-    },
     "Mildura (Digital) - 35007-D.png": {
         "split_ratio": [1.0],
         "LHS": [
@@ -691,7 +682,7 @@ TEMPLATE_COORDINATES = {
             (1588, 1260),
         ]
     },
-    "Yarrawonga (Digital) - 37303-D (Mock Up).png": {
+    "Yarrawonga (Digital) - 37303-D.png": {
         "split_ratio": [1.0],
         "LHS": [
             (1967, 1428),

@@ -82,6 +82,7 @@ import base64
 import gc
 import hashlib
 import hmac
+import io
 import os
 import secrets
 import shutil
@@ -380,6 +381,39 @@ def render_add_site_panel(
 
         st.markdown("**Detected billboard window** — corners are TL / TR / BR / BL.")
 
+        # Cache the overlay preview by (working_path, quad) — without this,
+        # every single fragment rerun (including just changing the corner
+        # dropdown, before any click happens) redraws the overlay from
+        # scratch: re-opening the file, resizing, drawing shapes. That's
+        # real, perceptible work happening on every interaction, which is
+        # what was still showing up as lag/fade even after fragment-scoping
+        # stopped the rest of the page from re-rendering. Only recompute
+        # when the quad or file actually changes.
+        cache_key = (str(working_path), tuple(quad))
+        if st.session_state.get("admin_preview_cache_key") != cache_key:
+            preview_img = draw_quad_overlay(working_path, quad, max_edge=PREVIEW_MAX_EDGE)
+            try:
+                buf = io.BytesIO()
+                preview_img.save(buf, format="PNG")
+                preview_width = preview_img.width
+            finally:
+                preview_img.close()
+
+            full = None
+            try:
+                full = Image.open(working_path)
+                full_width = full.width
+            finally:
+                if full is not None:
+                    full.close()
+
+            st.session_state["admin_preview_bytes"] = buf.getvalue()
+            st.session_state["admin_preview_scale"] = preview_width / full_width
+            st.session_state["admin_preview_cache_key"] = cache_key
+            gc.collect()
+
+        scale = st.session_state["admin_preview_scale"]
+
         preview = None
         try:
             if HAS_CLICK_COMPONENT:
@@ -390,14 +424,7 @@ def render_add_site_panel(
                     key="admin_adjust_corner_select",
                     label_visibility="collapsed",
                 )
-                preview = draw_quad_overlay(working_path, quad, max_edge=PREVIEW_MAX_EDGE)
-                full = None
-                try:
-                    full = Image.open(working_path)
-                    scale = preview.width / full.width
-                finally:
-                    if full is not None:
-                        full.close()
+                preview = Image.open(io.BytesIO(st.session_state["admin_preview_bytes"]))
 
                 click = streamlit_image_coordinates(preview, key="admin_click")
 
@@ -417,7 +444,7 @@ def render_add_site_panel(
                     "Install `streamlit-image-coordinates` (see requirements.txt) to enable "
                     "click-to-adjust. Manual overrides for now:"
                 )
-                preview = draw_quad_overlay(working_path, quad, max_edge=PREVIEW_MAX_EDGE)
+                preview = Image.open(io.BytesIO(st.session_state["admin_preview_bytes"]))
                 st.image(preview)
                 cols = st.columns(4)
                 labels = ["TL", "TR", "BR", "BL"]
@@ -445,7 +472,8 @@ def render_add_site_panel(
         save_clicked = st.button("Save Site", type="primary", width="stretch")
 
         if save_clicked:
-            _handle_save(site_name, quad, working_path, template_dir, job_dir)
+            with st.spinner("Saving site…"):
+                _handle_save(site_name, quad, working_path, template_dir, job_dir)
 
         _render_admin_errors()
 
