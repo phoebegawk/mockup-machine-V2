@@ -787,3 +787,4 @@ TEMPLATE_COORDINATES = {
             (2182, 1234)
         ],
     },
+}
