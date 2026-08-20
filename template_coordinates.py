@@ -868,4 +868,13 @@ TEMPLATE_COORDINATES = {
             (1437, 837),
         ]
     },
+    "Port Macquarie (Digital) - 24445-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (1312, 1114),
+            (2171, 1097),
+            (2171, 1341),
+            (1309, 1351),
+        ]
+    },
 }
