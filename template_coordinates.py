@@ -877,4 +877,13 @@ TEMPLATE_COORDINATES = {
             (1309, 1351),
         ]
     },
+    "Port Stephans (Digital) - 23171-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (1476, 1001),
+            (2258, 994),
+            (2261, 1244),
+            (1476, 1242),
+        ]
+    },
 }
