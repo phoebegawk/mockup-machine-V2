@@ -850,4 +850,13 @@ TEMPLATE_COORDINATES = {
             (1263, 1068),
         ]
     },
+    "Mount Barker - (Digital) - 52512-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (840, 325),
+            (978, 324),
+            (980, 572),
+            (843, 574),
+        ]
+    },
 }
