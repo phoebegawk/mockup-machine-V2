@@ -796,4 +796,13 @@ TEMPLATE_COORDINATES = {
             (1350, 747),
         ]
     },
+    "Ballarat CBD (Digital) - 33509-D.png": {
+        "split_ratio": [1.0],
+        "LHS": [
+            (2179, 912),
+            (2994, 915),
+            (2994, 1162),
+            (2179, 1159),
+        ]
+    },
 }
